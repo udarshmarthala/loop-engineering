@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOOP CTRL — Engineering Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:         #06080a;
+    --bg1:        #0d1014;
+    --bg2:        #131820;
+    --bg3:        #1a2230;
+    --amber:      #e8943a;
+    --amber-dim:  #8a5420;
+    --amber-glow: rgba(232,148,58,0.15);
+    --green:      #3dd68c;
+    --green-dim:  #1a5c3a;
+    --red:        #e84545;
+    --red-dim:    #5c1a1a;
+    --yellow:     #e8c73a;
+    --yellow-dim: #5c4a1a;
+    --blue:       #4a9ede;
+    --blue-dim:   #1a3a5c;
+    --text:       #c8d4dc;
+    --text-dim:   #4a5a6a;
+    --text-faint: #2a3540;
+    --mono:       'Share Tech Mono', monospace;
+    --sans:       'Barlow Condensed', sans-serif;
+    --border:     rgba(232,148,58,0.2);
+    --border-dim: rgba(200,212,220,0.06);
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.5;
+    overflow: hidden;
+  }
+
+  /* CRT scanline + noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.5;
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  /* LAYOUT */
+  .shell {
+    display: grid;
+    grid-template-rows: 52px 1fr;
+    grid-template-columns: 320px 1fr 260px;
+    height: 100vh;
+    gap: 0;
+  }
+
+  /* HEADER */
+  header {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 0 20px;
+    background: var(--bg1);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 10;
+  }
+
+  .logo {
+    font-family: var(--sans);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--amber);
+    text-shadow: 0 0 20px var(--amber-glow);
+    text-transform: uppercase;
+  }
+
+  .logo span {
+    color: var(--text-dim);
+    font-weight: 300;
+    margin-left: 4px;
+  }
+
+  .header-sep {
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .pulse-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .pulse-dot.amber { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+  .pulse-dot.red   { background: var(--red);   box-shadow: 0 0 8px var(--red);   animation: none; }
+  .pulse-dot.idle  { background: var(--text-dim); box-shadow: none; animation: none; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+  }
+
+  .header-metrics {
+    margin-left: auto;
+    display: flex;
+    gap: 32px;
+  }
+
+  .hm {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .hm-label {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .hm-value {
+    font-size: 18px;
+    font-family: var(--sans);
+    font-weight: 600;
+    color: var(--amber);
+    line-height: 1.1;
+  }
+
+  /* LEFT PANEL — Goal + Config */
+  .left-panel {
+    background: var(--bg1);
+    border-right: 1px solid var(--border-dim);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-dim);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .panel-header::before {
+    content: '//';
+    color: var(--amber-dim);
+  }
+
+  .goal-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 12px;
+  }
+
+  .goal-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--amber-dim);
+  }
+
+  textarea {
+    flex: 1;
+    background: var(--bg2);
+    border: 1px solid var(--border-dim);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 12px;
+    resize: none;
+    outline: none;
+    border-radius: 2px;
+    transition: border-color 0.2s;
+    min-height: 120px;
+  }
+
+  textarea:focus {
+    border-color: var(--amber);
+    box-shadow: 0 0 0 1px var(--amber-glow), inset 0 0 20px rgba(232,148,58,0.03);
+  }
+
+  textarea::placeholder {
+    color: var(--text-faint);
+  }
+
+  .run-btn {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid var(--amber);
+    color: var(--amber);
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+
+  .run-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--amber);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 0;
+  }
+
+  .run-btn:hover::before { transform: translateX(0); }
+  .run-btn:hover { color: var(--bg); }
+  .run-btn span { position: relative; z-index: 1; }
+
+  .run-btn:disabled {
+    border-color: var(--text-faint);
+    color: var(--text-faint);
+    cursor: not-allowed;
+  }
+  .run-btn:disabled::before { display: none; }
+
+  /* CONFIG SECTION */
+  .config-section {
+    border-top: 1px solid var(--border-dim);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .config-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .config-key {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .config-val {
+    font-size: 11px;
+    color: var(--amber);
+    background: var(--bg2);
+    border: 1px solid var(--border-dim);
+    padding: 3px 8px;
+    border-radius: 2px;
+    width: 64px;
+    text-align: right;
+    font-family: var(--mono);
+    outline: none;
+  }
+
+  .config-val:focus {
+    border-color: var(--amber);
+  }
+
+  /* TASK CARDS - LEFT PANEL BOTTOM */
+  .tasks-section {
+    border-top: 1px solid var(--border-dim);
+    overflow-y: auto;
+    max-height: 240px;
+  }
+
+  .task-card {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border-dim);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .task-status-icon {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+
+  .task-status-icon.ok      { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .task-status-icon.retry   { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+  .task-status-icon.fail    { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  .task-status-icon.running { background: var(--amber); box-shadow: 0 0 6px var(--amber); animation: pulse 1s ease-in-out infinite; }
+  .task-status-icon.pending { background: var(--text-faint); }
+
+  .task-info { flex: 1; min-width: 0; }
+
+  .task-id {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: var(--amber-dim);
+    text-transform: uppercase;
+  }
+
+  .task-desc {
+    font-size: 11px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .task-tool-badge {
+    font-size: 9px;
+    padding: 1px 5px;
+    border: 1px solid var(--border-dim);
+    border-radius: 2px;
+    color: var(--text-dim);
+    flex-shrink: 0;
+    letter-spacing: 0.05em;
+  }
+
+  /* CENTER — TRACE LOG */
+  .center-panel {
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-right: 1px solid var(--border-dim);
+  }
+
+  .trace-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    scroll-behavior: smooth;
+  }
+
+  .trace-log::-webkit-scrollbar { width: 4px; }
+  .trace-log::-webkit-scrollbar-track { background: transparent; }
+  .trace-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .trace-event {
+    display: grid;
+    grid-template-columns: 44px 56px 1fr;
+    gap: 10px;
+    padding: 8px 10px;
+    border-left: 2px solid transparent;
+    border-radius: 0 2px 2px 0;
+    animation: fadeUp 0.25s ease;
+    background: var(--bg1);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .trace-event.PLAN   { border-left-color: var(--blue);   background: linear-gradient(90deg, var(--blue-dim) 0%, transparent 20%); }
+  .trace-event.EXEC   { border-left-color: var(--amber);  background: linear-gradient(90deg, var(--amber-glow) 0%, transparent 20%); }
+  .trace-event.EVAL   { border-left-color: #a78bfa;       background: linear-gradient(90deg, rgba(167,139,250,0.08) 0%, transparent 20%); }
+  .trace-event.OK     { border-left-color: var(--green);  background: linear-gradient(90deg, var(--green-dim) 0%, transparent 20%); }
+  .trace-event.RETRY  { border-left-color: var(--yellow); background: linear-gradient(90deg, var(--yellow-dim) 0%, transparent 20%); }
+  .trace-event.FAIL   { border-left-color: var(--red);    background: linear-gradient(90deg, var(--red-dim) 0%, transparent 20%); }
+  .trace-event.DONE   { border-left-color: var(--green);  background: linear-gradient(90deg, var(--green-dim) 0%, transparent 40%); }
+
+  .ev-iter {
+    font-size: 10px;
+    color: var(--text-faint);
+    text-align: right;
+    padding-top: 1px;
+  }
+
+  .ev-tag {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding-top: 1px;
+  }
+
+  .ev-tag.PLAN  { color: var(--blue); }
+  .ev-tag.EXEC  { color: var(--amber); }
+  .ev-tag.EVAL  { color: #a78bfa; }
+  .ev-tag.OK    { color: var(--green); }
+  .ev-tag.RETRY { color: var(--yellow); }
+  .ev-tag.FAIL  { color: var(--red); }
+  .ev-tag.DONE  { color: var(--green); }
+
+  .ev-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .ev-main { font-size: 12px; color: var(--text); }
+  .ev-sub  { font-size: 10px; color: var(--text-dim); }
+
+  .ev-confidence {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .conf-bar {
+    height: 3px;
+    width: 60px;
+    background: var(--bg3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .conf-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease;
+  }
+
+  .conf-fill.high   { background: var(--green); }
+  .conf-fill.medium { background: var(--yellow); }
+  .conf-fill.low    { background: var(--red); }
+
+  /* GOAL DISPLAY IN CENTER */
+  .goal-display {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-dim);
+    background: var(--bg1);
+  }
+
+  .goal-display-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--amber-dim);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .goal-display-text {
+    font-size: 12px;
+    color: var(--text);
+    opacity: 0.8;
+  }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--text-faint);
+  }
+
+  .empty-glyph {
+    font-size: 48px;
+    font-family: var(--sans);
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    color: var(--text-faint);
+    opacity: 0.3;
+  }
+
+  .empty-text {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* RIGHT PANEL — Metrics */
+  .right-panel {
+    background: var(--bg1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .metric-block {
+    padding: 20px 16px;
+    border-bottom: 1px solid var(--border-dim);
+  }
+
+  .metric-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .metric-big {
+    font-family: var(--sans);
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--amber);
+    text-shadow: 0 0 30px var(--amber-glow);
+  }
+
+  .metric-big.green { color: var(--green); text-shadow: 0 0 30px rgba(61,214,140,0.3); }
+  .metric-big.red   { color: var(--red);   text-shadow: 0 0 30px rgba(232,69,69,0.3); }
+
+  .metric-sub {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  /* Loop cycle diagram */
+  .cycle-diagram {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-dim);
+  }
+
+  .cycle-nodes {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+    padding-left: 16px;
+  }
+
+  .cycle-node {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    position: relative;
+  }
+
+  .cycle-node::before {
+    content: '';
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1px solid var(--text-faint);
+    transform: translateY(-50%);
+    transition: all 0.3s;
+  }
+
+  .cycle-node::after {
+    content: '';
+    position: absolute;
+    left: -9px;
+    top: calc(50% + 4px);
+    width: 1px;
+    height: calc(100% - 4px);
+    background: var(--border-dim);
+  }
+
+  .cycle-node:last-child::after { display: none; }
+
+  .cycle-node.active::before {
+    background: var(--amber);
+    border-color: var(--amber);
+    box-shadow: 0 0 8px var(--amber);
+    animation: pulse 1s ease-in-out infinite;
+  }
+
+  .cycle-node.done::before {
+    background: var(--green);
+    border-color: var(--green);
+    box-shadow: 0 0 6px var(--green);
+  }
+
+  .cycle-name {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    transition: color 0.3s;
+  }
+
+  .cycle-node.active .cycle-name { color: var(--amber); }
+  .cycle-node.done .cycle-name   { color: var(--green); }
+
+  .cycle-task-id {
+    font-size: 9px;
+    color: var(--text-faint);
+    margin-left: auto;
+    letter-spacing: 0.05em;
+  }
+
+  /* Confidence history sparkline */
+  .sparkline-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-dim);
+  }
+
+  .sparkline-canvas {
+    width: 100%;
+    height: 48px;
+    display: block;
+  }
+
+  /* Elapsed timer */
+  .timer-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--border-dim);
+  }
+
+  .elapsed {
+    font-family: var(--sans);
+    font-size: 32px;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: var(--text);
+    opacity: 0.6;
+  }
+
+  /* HUMAN GATE MODAL */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(6,8,10,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .modal-backdrop.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    background: var(--bg1);
+    border: 1px solid var(--amber);
+    border-radius: 4px;
+    padding: 32px;
+    max-width: 440px;
+    width: 90%;
+    box-shadow: 0 0 60px rgba(232,148,58,0.15), 0 0 0 1px rgba(232,148,58,0.1);
+    transform: translateY(16px);
+    transition: transform 0.3s;
+  }
+
+  .modal-backdrop.open .modal {
+    transform: translateY(0);
+  }
+
+  .modal-title {
+    font-family: var(--sans);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 4px;
+  }
+
+  .modal-sub {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+  }
+
+  .modal-body {
+    background: var(--bg2);
+    border: 1px solid var(--border-dim);
+    border-radius: 2px;
+    padding: 12px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .modal-row {
+    display: flex;
+    gap: 12px;
+  }
+
+  .modal-key {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    width: 80px;
+    flex-shrink: 0;
+  }
+
+  .modal-val {
+    font-size: 11px;
+    color: var(--text);
+  }
+
+  .conf-pill {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .conf-pill.low { background: var(--red-dim); color: var(--red); border: 1px solid var(--red); }
+
+  .modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .btn-approve, .btn-reject {
+    padding: 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-approve {
+    background: var(--green-dim);
+    border: 1px solid var(--green);
+    color: var(--green);
+  }
+
+  .btn-approve:hover {
+    background: var(--green);
+    color: var(--bg);
+  }
+
+  .btn-reject {
+    background: var(--red-dim);
+    border: 1px solid var(--red);
+    color: var(--red);
+  }
+
+  .btn-reject:hover {
+    background: var(--red);
+    color: var(--bg);
+  }
+
+  /* BOTTOM STATUS BAR */
+  .status-bar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 0 16px;
+    height: 28px;
+    background: var(--bg2);
+    border-top: 1px solid var(--border-dim);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+  }
+
+  .sb-item { display: flex; gap: 6px; }
+  .sb-key  { color: var(--text-faint); }
+  .sb-val  { color: var(--text-dim); }
+
+  /* CONTROL ROW */
+  .control-row {
+    display: flex;
+    gap: 8px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border-dim);
+  }
+
+  .stop-btn {
+    flex: 1;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid var(--red);
+    color: var(--red);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+    display: none;
+  }
+
+  .stop-btn:hover { background: var(--red); color: var(--bg); }
+  .stop-btn.visible { display: block; }
+
+  .clear-btn {
+    flex: 1;
+    padding: 8px;
+    background: transparent;
+    border: 1px solid var(--border-dim);
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+
+  .clear-btn:hover { border-color: var(--text-dim); color: var(--text); }
+
+  /* Scrollbar */
+  .tasks-section::-webkit-scrollbar { width: 3px; }
+  .tasks-section::-webkit-scrollbar-thumb { background: var(--border); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">Loop<span>Ctrl</span></div>
+    <div class="header-sep"></div>
+    <div class="status-badge">
+      <div class="pulse-dot idle" id="mainDot"></div>
+      <span id="mainStatus">IDLE</span>
+    </div>
+    <div class="header-sep"></div>
+    <div class="status-badge">
+      <span>MODEL</span>
+      <span style="color:var(--text)">claude-sonnet-4-6</span>
+    </div>
+    <div class="header-metrics">
+      <div class="hm">
+        <div class="hm-label">Iterations</div>
+        <div class="hm-value" id="hIter">0</div>
+      </div>
+      <div class="hm">
+        <div class="hm-label">Tasks Done</div>
+        <div class="hm-value" id="hDone">0</div>
+      </div>
+      <div class="hm">
+        <div class="hm-label">Success Rate</div>
+        <div class="hm-value" id="hRate">—</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+    <div class="panel-header">Goal Definition</div>
+    <div class="goal-area">
+      <div class="goal-label">Objective</div>
+      <textarea id="goalInput" placeholder="Describe the goal for the agent to execute autonomously...
+
+Example:
+Run pytest on src/, identify failures, patch each bug, re-run until all tests pass."></textarea>
+      <button class="run-btn" id="runBtn" onclick="startLoop()">
+        <span>▶ Execute Loop</span>
+      </button>
+    </div>
+
+    <div class="config-section">
+      <div class="panel-header" style="padding:0 0 8px 0;border:none;font-size:9px">Config</div>
+      <div class="config-row">
+        <div class="config-key">Max Iter</div>
+        <input class="config-val" id="cfgMaxIter" type="number" value="20" min="1" max="100">
+      </div>
+      <div class="config-row">
+        <div class="config-key">Max Retry</div>
+        <input class="config-val" id="cfgMaxRetry" type="number" value="3" min="0" max="10">
+      </div>
+      <div class="config-row">
+        <div class="config-key">Timeout (s)</div>
+        <input class="config-val" id="cfgTimeout" type="number" value="60" min="5" max="300">
+      </div>
+      <div class="config-row">
+        <div class="config-key">Confidence</div>
+        <input class="config-val" id="cfgConf" type="number" value="0.8" step="0.05" min="0" max="1">
+      </div>
+    </div>
+
+    <div class="panel-header">Task Queue</div>
+    <div class="tasks-section" id="taskCards">
+      <div style="padding:16px;font-size:10px;color:var(--text-faint);letter-spacing:0.1em;text-transform:uppercase">
+        No tasks yet
+      </div>
+    </div>
+
+    <div class="control-row">
+      <button class="stop-btn" id="stopBtn" onclick="stopLoop()">■ Stop</button>
+      <button class="clear-btn" onclick="clearAll()">Clear Trace</button>
+    </div>
+  </div>
+
+  <!-- CENTER — TRACE -->
+  <div class="center-panel">
+    <div class="goal-display" id="goalDisplay" style="display:none">
+      <div class="goal-display-label">Active Goal</div>
+      <div class="goal-display-text" id="goalDisplayText"></div>
+    </div>
+
+    <div id="emptyState" class="empty-state">
+      <div class="empty-glyph">↺</div>
+      <div class="empty-text">Awaiting goal</div>
+    </div>
+
+    <div class="trace-log" id="traceLog" style="display:none"></div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="panel-header">Loop Metrics</div>
+
+    <div class="metric-block">
+      <div class="metric-label">Iteration</div>
+      <div class="metric-big" id="mIter">0</div>
+      <div class="metric-sub" id="mIterSub">of 20 max</div>
+    </div>
+
+    <div class="metric-block">
+      <div class="metric-label">Last Confidence</div>
+      <div class="metric-big" id="mConf">—</div>
+      <div class="metric-sub">threshold: 0.80</div>
+    </div>
+
+    <div class="metric-block">
+      <div class="panel-header" style="padding:0 0 12px 0;border:none;font-size:9px">Loop Phase</div>
+      <div class="cycle-nodes" id="cycleNodes">
+        <div class="cycle-node" id="cn-plan">
+          <span class="cycle-name">Plan</span>
+          <span class="cycle-task-id" id="cn-plan-id"></span>
+        </div>
+        <div class="cycle-node" id="cn-exec">
+          <span class="cycle-name">Execute</span>
+          <span class="cycle-task-id" id="cn-exec-id"></span>
+        </div>
+        <div class="cycle-node" id="cn-eval">
+          <span class="cycle-name">Evaluate</span>
+          <span class="cycle-task-id" id="cn-eval-id"></span>
+        </div>
+        <div class="cycle-node" id="cn-done">
+          <span class="cycle-name">Complete</span>
+          <span class="cycle-task-id" id="cn-done-id"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sparkline-section">
+      <div class="metric-label">Confidence History</div>
+      <canvas class="sparkline-canvas" id="sparkCanvas" width="228" height="48"></canvas>
+    </div>
+
+    <div class="timer-section">
+      <div class="metric-label">Elapsed</div>
+      <div class="elapsed" id="elapsed">00:00</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- HUMAN GATE MODAL -->
+<div class="modal-backdrop" id="humanGateModal">
+  <div class="modal">
+    <div class="modal-title">Human Gate</div>
+    <div class="modal-sub">Low confidence — approval required</div>
+    <div class="modal-body">
+      <div class="modal-row">
+        <div class="modal-key">Task</div>
+        <div class="modal-val" id="mgTaskId">—</div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-key">Reason</div>
+        <div class="modal-val" id="mgReason">—</div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-key">Confidence</div>
+        <div class="modal-val"><span class="conf-pill low" id="mgConf">—</span></div>
+      </div>
+      <div class="modal-row">
+        <div class="modal-key">Suggestion</div>
+        <div class="modal-val" id="mgSuggestion">—</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-approve" onclick="resolveGate(true)">✓ Approve</button>
+      <button class="btn-reject" onclick="resolveGate(false)">✗ Reject</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+let state = {
+  running: false,
+  iteration: 0,
+  tasksTotal: 0,
+  tasksDone: 0,
+  startTime: null,
+  confidenceHistory: [],
+  gateResolve: null,
+  timerInterval: null,
+  demoTimeout: null,
+};
+
+// ─── Demo simulation data ─────────────────────────────────────────────────────
+const DEMO_TASKS = [
+  { id: "t1", description: "Run pytest on src/", tool: "bash" },
+  { id: "t2", description: "Read failing test file", tool: "file" },
+  { id: "t3", description: "Identify root cause", tool: "llm"  },
+  { id: "t4", description: "Patch auth.py bug", tool: "file" },
+  { id: "t5", description: "Re-run test suite", tool: "bash" },
+];
+
+const DEMO_EVENTS = [
+  { delay: 400,  type: "PLAN",  main: "Decomposed goal into 5 tasks", sub: "tasks: t1 → t2 → t3 → t4 → t5", phase: "plan" },
+  { delay: 900,  type: "EXEC",  main: "Running: pytest src/", sub: "tool: bash — task t1", taskId: "t1", tool: "bash", phase: "exec" },
+  { delay: 1800, type: "EVAL",  main: "Evaluating task t1 result", sub: "checking exit code + output", phase: "eval", conf: 0.91 },
+  { delay: 2300, type: "RETRY", main: "2 tests failed — retrying with refinement", sub: "suggestion: check mock paths in test_auth.py", taskId: "t1", phase: "exec" },
+  { delay: 3000, type: "EXEC",  main: "Running: pytest src/ -x", sub: "tool: bash — task t1 (retry 1)", taskId: "t1", tool: "bash", phase: "exec" },
+  { delay: 4000, type: "EVAL",  main: "Still 1 failure — escalating", sub: "confidence below threshold", phase: "eval", conf: 0.62, gate: true, gateTask: "t1", gateReason: "Test still failing after mock path fix", gateSug: "Check if the fixture teardown is resetting state" },
+  { delay: 6000, type: "OK",    main: "Task t1 complete", sub: "exit 0 — 1 failing test identified", taskId: "t1", phase: "exec", doneId: "t1" },
+  { delay: 6500, type: "EXEC",  main: "Reading: src/tests/test_auth.py", sub: "tool: file — task t2", taskId: "t2", tool: "file", phase: "exec" },
+  { delay: 7300, type: "EVAL",  main: "File read successful", sub: "1842 bytes loaded", phase: "eval", conf: 0.98 },
+  { delay: 7600, type: "OK",    main: "Task t2 complete", sub: "test file contents in scratchpad", taskId: "t2", doneId: "t2" },
+  { delay: 8100, type: "EXEC",  main: "LLM: Analyzing failure root cause", sub: "tool: llm — task t3", taskId: "t3", tool: "llm", phase: "exec" },
+  { delay: 9500, type: "EVAL",  main: "Root cause identified", sub: "token expiry uses < not <=", phase: "eval", conf: 0.95 },
+  { delay: 9800, type: "OK",    main: "Task t3 complete", sub: "suggestion logged to scratchpad", taskId: "t3", doneId: "t3" },
+  { delay: 10300, type: "EXEC", main: "Writing fix to src/auth.py", sub: "tool: file — task t4", taskId: "t4", tool: "file", phase: "exec" },
+  { delay: 11000, type: "EVAL", main: "File written successfully", sub: "patch applied: line 47", phase: "eval", conf: 0.99 },
+  { delay: 11300, type: "OK",   main: "Task t4 complete", sub: "src/auth.py patched", taskId: "t4", doneId: "t4" },
+  { delay: 11800, type: "EXEC", main: "Running: pytest src/ --tb=short", sub: "tool: bash — task t5", taskId: "t5", tool: "bash", phase: "exec" },
+  { delay: 13200, type: "EVAL", main: "All tests passing", sub: "5 passed, 0 failed", phase: "eval", conf: 1.0 },
+  { delay: 13500, type: "OK",   main: "Task t5 complete", sub: "test suite green ✓", taskId: "t5", doneId: "t5" },
+  { delay: 14000, type: "DONE", main: "Goal achieved", sub: "all 5 tasks complete — 13 iterations", phase: "done" },
+];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function setPhase(phase) {
+  ["plan","exec","eval","done"].forEach(p => {
+    const el = document.getElementById(`cn-${p}`);
+    if (!el) return;
+    el.classList.remove("active","done");
+  });
+  const el = document.getElementById(`cn-${phase}`);
+  if (el) el.classList.add("active");
+}
+
+function markPhaseDone(phase) {
+  const el = document.getElementById(`cn-${phase}`);
+  if (el) { el.classList.remove("active"); el.classList.add("done"); }
+}
+
+function updateConfMeter(val) {
+  if (val === null || val === undefined) return;
+  state.confidenceHistory.push(val);
+  const pct = Math.round(val * 100);
+  const mConf = document.getElementById("mConf");
+  mConf.textContent = pct + "%";
+  mConf.className = "metric-big " + (val >= 0.8 ? "green" : "red");
+  document.getElementById("cfgConf").value;
+  drawSparkline();
+}
+
+function drawSparkline() {
+  const canvas = document.getElementById("sparkCanvas");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const hist = state.confidenceHistory;
+  if (hist.length < 2) return;
+
+  const points = hist.slice(-20);
+  const step = W / (points.length - 1);
+
+  ctx.beginPath();
+  ctx.strokeStyle = "rgba(232,148,58,0.4)";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([2,3]);
+  ctx.moveTo(0, H * (1 - 0.8));
+  ctx.lineTo(W, H * (1 - 0.8));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, "rgba(61,214,140,0.3)");
+  grad.addColorStop(1, "rgba(61,214,140,0)");
+
+  ctx.beginPath();
+  points.forEach((v, i) => { const x = i * step, y = H * (1 - v); i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y); });
+  ctx.lineTo((points.length-1)*step, H);
+  ctx.lineTo(0, H);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.strokeStyle = "#3dd68c";
+  ctx.lineWidth = 1.5;
+  points.forEach((v, i) => { const x = i * step, y = H * (1 - v); i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y); });
+  ctx.stroke();
+
+  const last = points[points.length-1];
+  const lx = (points.length-1)*step, ly = H*(1-last);
+  ctx.beginPath();
+  ctx.arc(lx, ly, 3, 0, Math.PI*2);
+  ctx.fillStyle = "#3dd68c";
+  ctx.fill();
+}
+
+function addEvent(ev) {
+  state.iteration++;
+  document.getElementById("hIter").textContent = state.iteration;
+  document.getElementById("mIter").textContent = state.iteration;
+
+  const log = document.getElementById("traceLog");
+  const div = document.createElement("div");
+  div.className = `trace-event ${ev.type}`;
+
+  let confHtml = "";
+  if (ev.conf !== undefined) {
+    const pct = Math.round(ev.conf * 100);
+    const cls = ev.conf >= 0.8 ? "high" : ev.conf >= 0.6 ? "medium" : "low";
+    confHtml = `<div class="ev-confidence">
+      <div class="conf-bar"><div class="conf-fill ${cls}" style="width:${pct}%"></div></div>
+      <span>${pct}%</span>
+    </div>`;
+    updateConfMeter(ev.conf);
+  }
+
+  div.innerHTML = `
+    <div class="ev-iter">#${state.iteration}</div>
+    <div class="ev-tag ${ev.type}">${ev.type}</div>
+    <div class="ev-body">
+      <div class="ev-main">${ev.main}</div>
+      ${ev.sub ? `<div class="ev-sub">${ev.sub}</div>` : ""}
+      ${confHtml}
+    </div>
+  `;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+
+  if (ev.phase) setPhase(ev.phase);
+  if (ev.doneId) {
+    state.tasksDone++;
+    document.getElementById("hDone").textContent = state.tasksDone;
+    updateTaskCard(ev.doneId, "ok");
+    markPhaseDone("exec");
+    const rate = Math.round((state.tasksDone / state.tasksTotal) * 100);
+    document.getElementById("hRate").textContent = rate + "%";
+  }
+  if (ev.taskId && !ev.doneId) updateTaskCard(ev.taskId, "running");
+}
+
+function updateTaskCard(id, status) {
+  const card = document.getElementById(`tc-${id}`);
+  if (!card) return;
+  const dot = card.querySelector(".task-status-icon");
+  dot.className = `task-status-icon ${status}`;
+}
+
+function renderTaskCards(tasks) {
+  const el = document.getElementById("taskCards");
+  el.innerHTML = "";
+  tasks.forEach(t => {
+    const d = document.createElement("div");
+    d.className = "task-card";
+    d.id = `tc-${t.id}`;
+    d.innerHTML = `
+      <div class="task-status-icon pending"></div>
+      <div class="task-info">
+        <div class="task-id">${t.id}</div>
+        <div class="task-desc">${t.description}</div>
+      </div>
+      <div class="task-tool-badge">${t.tool}</div>
+    `;
+    el.appendChild(d);
+  });
+}
+
+function showGate(ev) {
+  return new Promise(resolve => {
+    state.gateResolve = resolve;
+    document.getElementById("mgTaskId").textContent = ev.gateTask;
+    document.getElementById("mgReason").textContent = ev.gateReason;
+    document.getElementById("mgConf").textContent = Math.round(ev.conf * 100) + "%";
+    document.getElementById("mgSuggestion").textContent = ev.gateSug || "—";
+    document.getElementById("humanGateModal").classList.add("open");
+  });
+}
+
+function resolveGate(approved) {
+  document.getElementById("humanGateModal").classList.remove("open");
+  if (state.gateResolve) {
+    state.gateResolve(approved);
+    state.gateResolve = null;
+  }
+}
+
+function startTimer() {
+  state.startTime = Date.now();
+  state.timerInterval = setInterval(() => {
+    const s = Math.floor((Date.now() - state.startTime) / 1000);
+    const m = Math.floor(s / 60);
+    document.getElementById("elapsed").textContent =
+      String(m).padStart(2,"0") + ":" + String(s % 60).padStart(2,"0");
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(state.timerInterval);
+}
+
+// ─── Main loop ────────────────────────────────────────────────────────────────
+async function startLoop() {
+  const goal = document.getElementById("goalInput").value.trim();
+  if (!goal) { document.getElementById("goalInput").focus(); return; }
+
+  clearAll(false);
+  state.running = true;
+  state.iteration = 0;
+  state.tasksDone = 0;
+  state.tasksTotal = DEMO_TASKS.length;
+  state.confidenceHistory = [];
+
+  document.getElementById("runBtn").disabled = true;
+  document.getElementById("stopBtn").classList.add("visible");
+  document.getElementById("emptyState").style.display = "none";
+  document.getElementById("traceLog").style.display = "flex";
+  document.getElementById("goalDisplay").style.display = "block";
+  document.getElementById("goalDisplayText").textContent = goal;
+
+  const dot = document.getElementById("mainDot");
+  dot.className = "pulse-dot amber";
+  document.getElementById("mainStatus").textContent = "RUNNING";
+
+  renderTaskCards(DEMO_TASKS);
+  startTimer();
+
+  for (const ev of DEMO_EVENTS) {
+    if (!state.running) break;
+    await new Promise(r => { state.demoTimeout = setTimeout(r, ev.delay); });
+    if (!state.running) break;
+
+    if (ev.gate) {
+      addEvent(ev);
+      const approved = await showGate(ev);
+      if (!approved) { stopLoop("REJECTED"); return; }
+      continue;
+    }
+
+    addEvent(ev);
+
+    if (ev.type === "DONE") {
+      finishLoop(true);
+      return;
+    }
+  }
+}
+
+function finishLoop(success) {
+  state.running = false;
+  stopTimer();
+  document.getElementById("runBtn").disabled = false;
+  document.getElementById("stopBtn").classList.remove("visible");
+  const dot = document.getElementById("mainDot");
+  if (success) {
+    dot.className = "pulse-dot";
+    document.getElementById("mainStatus").textContent = "COMPLETE";
+    markPhaseDone("plan");
+    markPhaseDone("exec");
+    markPhaseDone("eval");
+    setPhase("done");
+    markPhaseDone("done");
+  }
+}
+
+function stopLoop(reason) {
+  state.running = false;
+  if (state.demoTimeout) clearTimeout(state.demoTimeout);
+  stopTimer();
+  document.getElementById("runBtn").disabled = false;
+  document.getElementById("stopBtn").classList.remove("visible");
+  document.getElementById("mainDot").className = "pulse-dot red";
+  document.getElementById("mainStatus").textContent = reason || "STOPPED";
+
+  const log = document.getElementById("traceLog");
+  const div = document.createElement("div");
+  div.className = "trace-event FAIL";
+  div.innerHTML = `
+    <div class="ev-iter">#${state.iteration}</div>
+    <div class="ev-tag FAIL">STOP</div>
+    <div class="ev-body">
+      <div class="ev-main">Loop terminated: ${reason || "user requested stop"}</div>
+    </div>
+  `;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function clearAll(resetView = true) {
+  state.running = false;
+  state.iteration = 0;
+  state.tasksDone = 0;
+  state.confidenceHistory = [];
+  if (state.demoTimeout) clearTimeout(state.demoTimeout);
+  stopTimer();
+
+  document.getElementById("hIter").textContent = "0";
+  document.getElementById("hDone").textContent = "0";
+  document.getElementById("hRate").textContent = "—";
+  document.getElementById("mIter").textContent = "0";
+  document.getElementById("mConf").textContent = "—";
+  document.getElementById("mConf").className = "metric-big";
+  document.getElementById("elapsed").textContent = "00:00";
+  document.getElementById("runBtn").disabled = false;
+  document.getElementById("stopBtn").classList.remove("visible");
+  document.getElementById("mainDot").className = "pulse-dot idle";
+  document.getElementById("mainStatus").textContent = "IDLE";
+
+  ["plan","exec","eval","done"].forEach(p => {
+    const el = document.getElementById(`cn-${p}`);
+    if (el) el.classList.remove("active","done");
+    const tid = document.getElementById(`cn-${p}-id`);
+    if (tid) tid.textContent = "";
+  });
+
+  const canvas = document.getElementById("sparkCanvas");
+  canvas.getContext("2d").clearRect(0,0,canvas.width,canvas.height);
+
+  if (resetView) {
+    document.getElementById("traceLog").innerHTML = "";
+    document.getElementById("traceLog").style.display = "none";
+    document.getElementById("emptyState").style.display = "flex";
+    document.getElementById("goalDisplay").style.display = "none";
+    document.getElementById("taskCards").innerHTML = `<div style="padding:16px;font-size:10px;color:var(--text-faint);letter-spacing:0.1em;text-transform:uppercase">No tasks yet</div>`;
+  }
+}
+</script>
+</body>
+</html>
