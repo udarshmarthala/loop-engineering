@@ -3,6 +3,7 @@ from schemas.task import Task, TaskResult
 from tools.bash_tool import run_bash
 from tools.file_tool import read_file, write_file
 from tools.web_tool import fetch_url
+from tools.registry import registry
 from config import LLM_MODEL, TASK_TIMEOUT_SECONDS
 
 
@@ -11,6 +12,19 @@ client = anthropic.Anthropic()
 
 async def run(task: Task, scratchpad: dict) -> TaskResult:
     try:
+        # --- Dynamic registry check (highest priority) ---
+        custom_fn = registry.get(task.tool)
+        if custom_fn is not None:
+            res = await custom_fn(task.inputs, scratchpad)
+            return TaskResult(
+                task_id=task.id,
+                output=res.get("output", ""),
+                success=res.get("success", False),
+                error=res.get("error"),
+                artifacts=res.get("artifacts", []),
+            )
+
+        # --- Built-in tools ---
         if task.tool == "bash":
             command = task.inputs.get("command", "")
             res = await run_bash(command, timeout=TASK_TIMEOUT_SECONDS)
@@ -68,7 +82,10 @@ async def run(task: Task, scratchpad: dict) -> TaskResult:
 
         else:
             return TaskResult(
-                task_id=task.id, output="", success=False, error=f"Unknown tool: {task.tool}"
+                task_id=task.id,
+                output="",
+                success=False,
+                error=f"Unknown tool: {task.tool}",
             )
 
     except Exception as e:
