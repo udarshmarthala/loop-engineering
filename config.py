@@ -6,3 +6,4 @@ CONFIDENCE_THRESHOLD = 0.8
 ENABLE_LONG_TERM_MEMORY = False
 LOG_LEVEL = "INFO"
 CHROMA_PATH = ".chroma"
+SELF_IMPROVE_FAILURE_THRESHOLD = 2  # evolve prompts after this many failures
