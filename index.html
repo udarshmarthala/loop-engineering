@@ -34,411 +34,188 @@
     --border-dim: rgba(200,212,220,0.06);
   }
 
-  html, body {
-    height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 13px;
-    line-height: 1.5;
-    overflow: hidden;
-  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); font-size: 13px; line-height: 1.5; overflow: hidden; }
 
-  /* CRT scanline + noise overlay */
   body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,0,0,0.08) 2px,
-      rgba(0,0,0,0.08) 4px
-    );
-    pointer-events: none;
-    z-index: 9999;
+    content: ''; position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+    pointer-events: none; z-index: 9999;
   }
 
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-    opacity: 0.5;
-    pointer-events: none;
-    z-index: 9998;
-  }
-
-  /* LAYOUT */
   .shell {
     display: grid;
-    grid-template-rows: 52px 1fr;
-    grid-template-columns: 320px 1fr 260px;
+    grid-template-rows: 52px 1fr 28px;
+    grid-template-columns: 300px 1fr 280px;
     height: 100vh;
-    gap: 0;
   }
 
-  /* HEADER */
+  /* ── HEADER ── */
   header {
     grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
-    gap: 24px;
+    display: flex; align-items: center; gap: 20px;
     padding: 0 20px;
     background: var(--bg1);
     border-bottom: 1px solid var(--border);
-    position: relative;
     z-index: 10;
   }
 
-  .logo {
-    font-family: var(--sans);
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    color: var(--amber);
-    text-shadow: 0 0 20px var(--amber-glow);
-    text-transform: uppercase;
-  }
+  .logo { font-family: var(--sans); font-size: 22px; font-weight: 700; letter-spacing: 0.12em; color: var(--amber); text-shadow: 0 0 20px var(--amber-glow); text-transform: uppercase; }
+  .logo span { color: var(--text-dim); font-weight: 300; margin-left: 4px; }
 
-  .logo span {
-    color: var(--text-dim);
-    font-weight: 300;
-    margin-left: 4px;
-  }
+  .vsep { width: 1px; height: 24px; background: var(--border); }
 
-  .header-sep {
-    width: 1px;
-    height: 24px;
-    background: var(--border);
-  }
+  .status-badge { display: flex; align-items: center; gap: 7px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); }
 
-  .status-badge {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-  }
-
-  .pulse-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--green);
-    box-shadow: 0 0 8px var(--green);
-    animation: pulse 2s ease-in-out infinite;
-  }
-
+  .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s ease-in-out infinite; }
   .pulse-dot.amber { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
-  .pulse-dot.red   { background: var(--red);   box-shadow: 0 0 8px var(--red);   animation: none; }
+  .pulse-dot.red   { background: var(--red);   box-shadow: 0 0 8px var(--red); animation: none; }
   .pulse-dot.idle  { background: var(--text-dim); box-shadow: none; animation: none; }
+  .pulse-dot.paused { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); animation: none; }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.3; }
-  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-  .header-metrics {
+  /* ── AUTONOMY INDICATOR IN HEADER ── */
+  .autonomy-header {
+    display: flex; align-items: center; gap: 10px;
     margin-left: auto;
-    display: flex;
-    gap: 32px;
   }
 
-  .hm {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
+  .autonomy-label-h { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); white-space: nowrap; }
+
+  .autonomy-mode-badge {
+    font-family: var(--sans); font-size: 13px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 2px 10px; border-radius: 2px;
+    transition: all 0.4s;
   }
 
-  .hm-label {
-    font-size: 9px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-  }
+  .autonomy-mode-badge.copilot  { background: var(--blue-dim);   color: var(--blue);   border: 1px solid var(--blue); }
+  .autonomy-mode-badge.partial  { background: var(--amber-glow);  color: var(--amber);  border: 1px solid var(--amber); }
+  .autonomy-mode-badge.auto     { background: var(--green-dim);   color: var(--green);  border: 1px solid var(--green); }
 
-  .hm-value {
-    font-size: 18px;
-    font-family: var(--sans);
-    font-weight: 600;
-    color: var(--amber);
-    line-height: 1.1;
-  }
+  .header-metrics { display: flex; gap: 28px; }
+  .hm { display: flex; flex-direction: column; align-items: flex-end; }
+  .hm-label { font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); }
+  .hm-value { font-size: 18px; font-family: var(--sans); font-weight: 600; color: var(--amber); line-height: 1.1; }
 
-  /* LEFT PANEL — Goal + Config */
-  .left-panel {
-    background: var(--bg1);
-    border-right: 1px solid var(--border-dim);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+  /* ── LEFT PANEL ── */
+  .left-panel { background: var(--bg1); border-right: 1px solid var(--border-dim); display: flex; flex-direction: column; overflow: hidden; }
 
-  .panel-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border-dim);
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-  }
+  .panel-header { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--border-dim); font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); }
+  .panel-header::before { content: '//'; color: var(--amber-dim); }
 
-  .panel-header::before {
-    content: '//';
-    color: var(--amber-dim);
-  }
+  .goal-area { display: flex; flex-direction: column; padding: 14px 16px; gap: 10px; }
+  .goal-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber-dim); }
 
-  .goal-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 16px;
-    gap: 12px;
-  }
+  textarea { background: var(--bg2); border: 1px solid var(--border-dim); color: var(--text); font-family: var(--mono); font-size: 12px; line-height: 1.6; padding: 10px; resize: none; outline: none; border-radius: 2px; height: 100px; transition: border-color 0.2s; }
+  textarea:focus { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber-glow); }
+  textarea::placeholder { color: var(--text-faint); }
 
-  .goal-label {
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--amber-dim);
-  }
-
-  textarea {
-    flex: 1;
-    background: var(--bg2);
-    border: 1px solid var(--border-dim);
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 12px;
-    line-height: 1.6;
-    padding: 12px;
-    resize: none;
-    outline: none;
-    border-radius: 2px;
-    transition: border-color 0.2s;
-    min-height: 120px;
-  }
-
-  textarea:focus {
-    border-color: var(--amber);
-    box-shadow: 0 0 0 1px var(--amber-glow), inset 0 0 20px rgba(232,148,58,0.03);
-  }
-
-  textarea::placeholder {
-    color: var(--text-faint);
-  }
-
-  .run-btn {
-    width: 100%;
-    padding: 12px;
-    background: transparent;
-    border: 1px solid var(--amber);
-    color: var(--amber);
-    font-family: var(--mono);
-    font-size: 12px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    cursor: pointer;
-    border-radius: 2px;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.2s;
-  }
-
-  .run-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--amber);
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-    z-index: 0;
-  }
-
+  .run-btn { width: 100%; padding: 10px; background: transparent; border: 1px solid var(--amber); color: var(--amber); font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; border-radius: 2px; position: relative; overflow: hidden; transition: all 0.2s; }
+  .run-btn::before { content: ''; position: absolute; inset: 0; background: var(--amber); transform: translateX(-100%); transition: transform 0.3s ease; z-index: 0; }
   .run-btn:hover::before { transform: translateX(0); }
   .run-btn:hover { color: var(--bg); }
   .run-btn span { position: relative; z-index: 1; }
-
-  .run-btn:disabled {
-    border-color: var(--text-faint);
-    color: var(--text-faint);
-    cursor: not-allowed;
-  }
+  .run-btn:disabled { border-color: var(--text-faint); color: var(--text-faint); cursor: not-allowed; }
   .run-btn:disabled::before { display: none; }
 
-  /* CONFIG SECTION */
-  .config-section {
-    border-top: 1px solid var(--border-dim);
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
+  /* ── AUTONOMY SLIDER ── */
+  .autonomy-section { padding: 14px 16px; border-top: 1px solid var(--border-dim); }
 
-  .config-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-  }
+  .autonomy-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .autonomy-title { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); }
+  .autonomy-value-label { font-family: var(--sans); font-size: 13px; font-weight: 700; letter-spacing: 0.05em; }
 
-  .config-key {
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    flex-shrink: 0;
-  }
+  .slider-track { position: relative; height: 4px; background: var(--bg3); border-radius: 2px; margin: 6px 0 10px; }
+  .slider-fill { position: absolute; left: 0; top: 0; height: 100%; border-radius: 2px; transition: width 0.2s, background 0.4s; }
+  .autonomy-range { width: 100%; height: 4px; opacity: 0; position: absolute; top: 0; cursor: pointer; }
 
-  .config-val {
-    font-size: 11px;
-    color: var(--amber);
-    background: var(--bg2);
-    border: 1px solid var(--border-dim);
-    padding: 3px 8px;
-    border-radius: 2px;
-    width: 64px;
-    text-align: right;
-    font-family: var(--mono);
-    outline: none;
-  }
+  .autonomy-ticks { display: flex; justify-content: space-between; margin-top: 6px; }
+  .autonomy-tick { font-size: 9px; letter-spacing: 0.05em; color: var(--text-faint); text-align: center; cursor: pointer; transition: color 0.2s; }
+  .autonomy-tick:hover { color: var(--text-dim); }
+  .autonomy-tick.active { color: var(--amber); }
 
-  .config-val:focus {
-    border-color: var(--amber);
-  }
+  .autonomy-desc { font-size: 10px; color: var(--text-dim); line-height: 1.5; padding: 8px; background: var(--bg2); border: 1px solid var(--border-dim); border-radius: 2px; min-height: 36px; transition: all 0.3s; }
 
-  /* TASK CARDS - LEFT PANEL BOTTOM */
-  .tasks-section {
-    border-top: 1px solid var(--border-dim);
-    overflow-y: auto;
-    max-height: 240px;
-  }
+  /* ── CONFIG ── */
+  .config-section { padding: 12px 16px; border-top: 1px solid var(--border-dim); display: flex; flex-direction: column; gap: 8px; }
+  .config-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .config-key { font-size: 10px; letter-spacing: 0.1em; color: var(--text-dim); text-transform: uppercase; flex-shrink: 0; }
+  .config-val { font-size: 11px; color: var(--amber); background: var(--bg2); border: 1px solid var(--border-dim); padding: 2px 6px; border-radius: 2px; width: 58px; text-align: right; font-family: var(--mono); outline: none; }
+  .config-val:focus { border-color: var(--amber); }
 
-  .task-card {
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border-dim);
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    animation: slideIn 0.3s ease;
-  }
+  /* ── TASK CARDS ── */
+  .tasks-section { border-top: 1px solid var(--border-dim); overflow-y: auto; flex: 1; }
+  .tasks-section::-webkit-scrollbar { width: 3px; }
+  .tasks-section::-webkit-scrollbar-thumb { background: var(--border); }
 
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateX(-8px); }
-    to   { opacity: 1; transform: translateX(0); }
-  }
+  .task-card { padding: 9px 16px; border-bottom: 1px solid var(--border-dim); display: flex; gap: 10px; align-items: flex-start; cursor: pointer; transition: background 0.15s; animation: slideIn 0.3s ease; }
+  .task-card:hover { background: var(--bg2); }
+  @keyframes slideIn { from { opacity:0; transform:translateX(-8px) } to { opacity:1; transform:translateX(0) } }
 
-  .task-status-icon {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-top: 4px;
-    flex-shrink: 0;
-  }
-
-  .task-status-icon.ok      { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .task-status-icon { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .task-status-icon.ok      { background: var(--green);  box-shadow: 0 0 6px var(--green); }
   .task-status-icon.retry   { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
-  .task-status-icon.fail    { background: var(--red); box-shadow: 0 0 6px var(--red); }
-  .task-status-icon.running { background: var(--amber); box-shadow: 0 0 6px var(--amber); animation: pulse 1s ease-in-out infinite; }
+  .task-status-icon.fail    { background: var(--red);    box-shadow: 0 0 6px var(--red); }
+  .task-status-icon.running { background: var(--amber);  box-shadow: 0 0 6px var(--amber); animation: pulse 1s ease-in-out infinite; }
   .task-status-icon.pending { background: var(--text-faint); }
+  .task-status-icon.waiting { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); animation: pulse 0.8s ease-in-out infinite; }
 
   .task-info { flex: 1; min-width: 0; }
+  .task-id { font-size: 9px; letter-spacing: 0.15em; color: var(--amber-dim); text-transform: uppercase; }
+  .task-desc { font-size: 11px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .task-tool-badge { font-size: 9px; padding: 1px 5px; border: 1px solid var(--border-dim); border-radius: 2px; color: var(--text-dim); flex-shrink: 0; }
 
-  .task-id {
-    font-size: 9px;
-    letter-spacing: 0.15em;
-    color: var(--amber-dim);
-    text-transform: uppercase;
-  }
+  /* task output drawer */
+  .task-output { display: none; padding: 8px 16px 10px; background: var(--bg2); border-bottom: 1px solid var(--border-dim); font-size: 10px; color: var(--text-dim); white-space: pre-wrap; line-height: 1.5; max-height: 80px; overflow-y: auto; }
+  .task-output.open { display: block; animation: fadeUp 0.2s ease; }
 
-  .task-desc {
-    font-size: 11px;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  /* ── CENTER PANEL ── */
+  .center-panel { background: var(--bg); display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--border-dim); }
 
-  .task-tool-badge {
-    font-size: 9px;
-    padding: 1px 5px;
-    border: 1px solid var(--border-dim);
-    border-radius: 2px;
-    color: var(--text-dim);
-    flex-shrink: 0;
+  .goal-display { padding: 10px 16px; border-bottom: 1px solid var(--border-dim); background: var(--bg1); display: none; }
+  .goal-display-label { font-size: 9px; letter-spacing: 0.2em; color: var(--amber-dim); text-transform: uppercase; margin-bottom: 3px; }
+  .goal-display-text { font-size: 12px; color: var(--text); opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* IRON MAN SUIT BANNER */
+  .ironman-banner {
+    padding: 8px 16px;
+    background: linear-gradient(90deg, rgba(74,158,222,0.08) 0%, transparent 100%);
+    border-bottom: 1px solid rgba(74,158,222,0.15);
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-size: 10px;
+    color: var(--blue);
     letter-spacing: 0.05em;
   }
 
-  /* CENTER — TRACE LOG */
-  .center-panel {
-    background: var(--bg);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border-right: 1px solid var(--border-dim);
-  }
+  .ironman-banner.show { display: flex; }
+  .ironman-icon { font-size: 14px; }
 
-  .trace-log {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    scroll-behavior: smooth;
-  }
+  .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--text-faint); }
+  .empty-glyph { font-size: 48px; font-family: var(--sans); font-weight: 700; color: var(--text-faint); opacity: 0.3; }
+  .empty-text { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; }
+  .empty-sub { font-size: 10px; color: var(--text-faint); opacity: 0.5; text-align: center; max-width: 260px; line-height: 1.6; }
 
+  .trace-log { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 5px; scroll-behavior: smooth; }
   .trace-log::-webkit-scrollbar { width: 4px; }
-  .trace-log::-webkit-scrollbar-track { background: transparent; }
   .trace-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  .trace-event {
-    display: grid;
-    grid-template-columns: 44px 56px 1fr;
-    gap: 10px;
-    padding: 8px 10px;
-    border-left: 2px solid transparent;
-    border-radius: 0 2px 2px 0;
-    animation: fadeUp 0.25s ease;
-    background: var(--bg1);
-  }
+  .trace-event { display: grid; grid-template-columns: 40px 54px 1fr auto; gap: 10px; padding: 7px 10px; border-left: 2px solid transparent; border-radius: 0 2px 2px 0; animation: fadeUp 0.25s ease; background: var(--bg1); align-items: start; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(5px) } to { opacity:1; transform:translateY(0) } }
 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+  .trace-event.PLAN  { border-left-color: var(--blue);   background: linear-gradient(90deg, rgba(74,158,222,0.06) 0%, transparent 25%); }
+  .trace-event.EXEC  { border-left-color: var(--amber);  background: linear-gradient(90deg, rgba(232,148,58,0.06) 0%, transparent 25%); }
+  .trace-event.EVAL  { border-left-color: #a78bfa;       background: linear-gradient(90deg, rgba(167,139,250,0.06) 0%, transparent 25%); }
+  .trace-event.OK    { border-left-color: var(--green);  background: linear-gradient(90deg, rgba(61,214,140,0.06) 0%, transparent 25%); }
+  .trace-event.RETRY { border-left-color: var(--yellow); background: linear-gradient(90deg, rgba(232,199,58,0.06) 0%, transparent 25%); }
+  .trace-event.FAIL  { border-left-color: var(--red);    background: linear-gradient(90deg, rgba(232,69,69,0.06) 0%, transparent 25%); }
+  .trace-event.DONE  { border-left-color: var(--green);  background: linear-gradient(90deg, rgba(61,214,140,0.1)  0%, transparent 60%); }
+  .trace-event.WAIT  { border-left-color: var(--yellow); background: linear-gradient(90deg, rgba(232,199,58,0.1)  0%, transparent 60%); }
 
-  .trace-event.PLAN   { border-left-color: var(--blue);   background: linear-gradient(90deg, var(--blue-dim) 0%, transparent 20%); }
-  .trace-event.EXEC   { border-left-color: var(--amber);  background: linear-gradient(90deg, var(--amber-glow) 0%, transparent 20%); }
-  .trace-event.EVAL   { border-left-color: #a78bfa;       background: linear-gradient(90deg, rgba(167,139,250,0.08) 0%, transparent 20%); }
-  .trace-event.OK     { border-left-color: var(--green);  background: linear-gradient(90deg, var(--green-dim) 0%, transparent 20%); }
-  .trace-event.RETRY  { border-left-color: var(--yellow); background: linear-gradient(90deg, var(--yellow-dim) 0%, transparent 20%); }
-  .trace-event.FAIL   { border-left-color: var(--red);    background: linear-gradient(90deg, var(--red-dim) 0%, transparent 20%); }
-  .trace-event.DONE   { border-left-color: var(--green);  background: linear-gradient(90deg, var(--green-dim) 0%, transparent 40%); }
-
-  .ev-iter {
-    font-size: 10px;
-    color: var(--text-faint);
-    text-align: right;
-    padding-top: 1px;
-  }
-
-  .ev-tag {
-    font-family: var(--sans);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    padding-top: 1px;
-  }
-
+  .ev-iter { font-size: 10px; color: var(--text-faint); text-align: right; padding-top: 1px; }
+  .ev-tag { font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; padding-top: 1px; }
   .ev-tag.PLAN  { color: var(--blue); }
   .ev-tag.EXEC  { color: var(--amber); }
   .ev-tag.EVAL  { color: #a78bfa; }
@@ -446,429 +223,139 @@
   .ev-tag.RETRY { color: var(--yellow); }
   .ev-tag.FAIL  { color: var(--red); }
   .ev-tag.DONE  { color: var(--green); }
+  .ev-tag.WAIT  { color: var(--yellow); }
 
   .ev-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .ev-main { font-size: 12px; color: var(--text); }
   .ev-sub  { font-size: 10px; color: var(--text-dim); }
 
-  .ev-confidence {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 10px;
-    color: var(--text-dim);
-    margin-top: 4px;
-  }
-
-  .conf-bar {
-    height: 3px;
-    width: 60px;
-    background: var(--bg3);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-
-  .conf-fill {
-    height: 100%;
-    border-radius: 2px;
-    transition: width 0.5s ease;
-  }
-
+  .ev-conf { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+  .conf-bar { height: 3px; width: 56px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+  .conf-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
   .conf-fill.high   { background: var(--green); }
   .conf-fill.medium { background: var(--yellow); }
   .conf-fill.low    { background: var(--red); }
+  .conf-pct { font-size: 10px; color: var(--text-dim); }
 
-  /* GOAL DISPLAY IN CENTER */
-  .goal-display {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border-dim);
-    background: var(--bg1);
+  /* verify button on trace event */
+  .verify-btn {
+    font-size: 9px; padding: 2px 7px; border-radius: 2px; cursor: pointer;
+    border: 1px solid var(--border-dim); background: transparent; color: var(--text-dim);
+    font-family: var(--mono); letter-spacing: 0.05em; transition: all 0.15s; white-space: nowrap; align-self: start;
   }
+  .verify-btn:hover { border-color: var(--green); color: var(--green); }
+  .verify-btn.verified { border-color: var(--green); color: var(--green); background: rgba(61,214,140,0.08); }
 
-  .goal-display-label {
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    color: var(--amber-dim);
-    text-transform: uppercase;
-    margin-bottom: 4px;
+  /* verify drawer */
+  .verify-drawer {
+    display: none; grid-column: 2 / -1;
+    background: var(--bg2); border: 1px solid var(--border-dim); border-radius: 2px;
+    padding: 10px; margin-top: 4px; font-size: 10px; color: var(--text-dim);
+    line-height: 1.6; white-space: pre-wrap; max-height: 100px; overflow-y: auto;
   }
+  .verify-drawer.open { display: block; animation: fadeUp 0.2s ease; }
 
-  .goal-display-text {
-    font-size: 12px;
-    color: var(--text);
-    opacity: 0.8;
-  }
+  /* ── RIGHT PANEL ── */
+  .right-panel { background: var(--bg1); display: flex; flex-direction: column; overflow: hidden; }
 
-  .empty-state {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    color: var(--text-faint);
-  }
-
-  .empty-glyph {
-    font-size: 48px;
-    font-family: var(--sans);
-    font-weight: 700;
-    letter-spacing: -0.05em;
-    color: var(--text-faint);
-    opacity: 0.3;
-  }
-
-  .empty-text {
-    font-size: 11px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-  }
-
-  /* RIGHT PANEL — Metrics */
-  .right-panel {
-    background: var(--bg1);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .metric-block {
-    padding: 20px 16px;
-    border-bottom: 1px solid var(--border-dim);
-  }
-
-  .metric-label {
-    font-size: 9px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 8px;
-  }
-
-  .metric-big {
-    font-family: var(--sans);
-    font-size: 42px;
-    font-weight: 700;
-    line-height: 1;
-    color: var(--amber);
-    text-shadow: 0 0 30px var(--amber-glow);
-  }
-
+  .metric-block { padding: 16px; border-bottom: 1px solid var(--border-dim); }
+  .metric-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
+  .metric-big { font-family: var(--sans); font-size: 40px; font-weight: 700; line-height: 1; color: var(--amber); text-shadow: 0 0 30px var(--amber-glow); }
   .metric-big.green { color: var(--green); text-shadow: 0 0 30px rgba(61,214,140,0.3); }
   .metric-big.red   { color: var(--red);   text-shadow: 0 0 30px rgba(232,69,69,0.3); }
+  .metric-sub { font-size: 10px; color: var(--text-dim); margin-top: 3px; }
 
-  .metric-sub {
-    font-size: 10px;
-    color: var(--text-dim);
-    margin-top: 4px;
-  }
-
-  /* Loop cycle diagram */
-  .cycle-diagram {
-    padding: 16px;
-    border-bottom: 1px solid var(--border-dim);
-  }
-
-  .cycle-nodes {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    position: relative;
-    padding-left: 16px;
-  }
-
-  .cycle-node {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 0;
-    position: relative;
-  }
-
-  .cycle-node::before {
-    content: '';
-    position: absolute;
-    left: -12px;
-    top: 50%;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    border: 1px solid var(--text-faint);
-    transform: translateY(-50%);
-    transition: all 0.3s;
-  }
-
-  .cycle-node::after {
-    content: '';
-    position: absolute;
-    left: -9px;
-    top: calc(50% + 4px);
-    width: 1px;
-    height: calc(100% - 4px);
-    background: var(--border-dim);
-  }
-
+  /* ── CYCLE NODES ── */
+  .cycle-diagram { padding: 14px 16px; border-bottom: 1px solid var(--border-dim); }
+  .cycle-nodes { display: flex; flex-direction: column; gap: 0; position: relative; padding-left: 16px; }
+  .cycle-node { display: flex; align-items: center; gap: 10px; padding: 7px 0; position: relative; }
+  .cycle-node::before { content: ''; position: absolute; left: -12px; top: 50%; width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--text-faint); transform: translateY(-50%); transition: all 0.3s; }
+  .cycle-node::after { content: ''; position: absolute; left: -9px; top: calc(50% + 4px); width: 1px; height: calc(100% - 4px); background: var(--border-dim); }
   .cycle-node:last-child::after { display: none; }
-
-  .cycle-node.active::before {
-    background: var(--amber);
-    border-color: var(--amber);
-    box-shadow: 0 0 8px var(--amber);
-    animation: pulse 1s ease-in-out infinite;
-  }
-
-  .cycle-node.done::before {
-    background: var(--green);
-    border-color: var(--green);
-    box-shadow: 0 0 6px var(--green);
-  }
-
-  .cycle-name {
-    font-family: var(--sans);
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    transition: color 0.3s;
-  }
-
+  .cycle-node.active::before { background: var(--amber); border-color: var(--amber); box-shadow: 0 0 8px var(--amber); animation: pulse 1s ease-in-out infinite; }
+  .cycle-node.done::before   { background: var(--green); border-color: var(--green); box-shadow: 0 0 6px var(--green); }
+  .cycle-name { font-family: var(--sans); font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); transition: color 0.3s; }
   .cycle-node.active .cycle-name { color: var(--amber); }
-  .cycle-node.done .cycle-name   { color: var(--green); }
+  .cycle-node.done   .cycle-name { color: var(--green); }
+  .cycle-badge { margin-left: auto; font-size: 9px; }
 
-  .cycle-task-id {
-    font-size: 9px;
-    color: var(--text-faint);
-    margin-left: auto;
-    letter-spacing: 0.05em;
-  }
+  /* ── SPARKLINE ── */
+  .sparkline-section { padding: 14px 16px; border-bottom: 1px solid var(--border-dim); }
+  .sparkline-canvas { width: 100%; height: 44px; display: block; }
 
-  /* Confidence history sparkline */
-  .sparkline-section {
-    padding: 16px;
-    border-bottom: 1px solid var(--border-dim);
-  }
+  /* ── HUMAN OVERRIDE CONTROLS ── */
+  .override-section { padding: 14px 16px; border-bottom: 1px solid var(--border-dim); }
+  .override-title { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; }
+  .override-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 
-  .sparkline-canvas {
-    width: 100%;
-    height: 48px;
-    display: block;
-  }
+  .ob { padding: 8px 6px; font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 2px; cursor: pointer; transition: all 0.2s; text-align: center; border: 1px solid; }
+  .ob-pause  { border-color: var(--yellow); color: var(--yellow); background: transparent; }
+  .ob-pause:hover  { background: var(--yellow); color: var(--bg); }
+  .ob-resume { border-color: var(--green);  color: var(--green);  background: transparent; }
+  .ob-resume:hover { background: var(--green);  color: var(--bg); }
+  .ob-inject { border-color: var(--blue);   color: var(--blue);   background: transparent; }
+  .ob-inject:hover { background: var(--blue);   color: var(--bg); }
+  .ob-stop   { border-color: var(--red);    color: var(--red);    background: transparent; }
+  .ob-stop:hover   { background: var(--red);    color: var(--bg); }
 
-  /* Elapsed timer */
-  .timer-section {
-    padding: 16px;
-    border-bottom: 1px solid var(--border-dim);
-  }
+  .inject-area { display: none; margin-top: 8px; }
+  .inject-area.open { display: block; }
+  .inject-input { width: 100%; background: var(--bg2); border: 1px solid var(--blue); color: var(--text); font-family: var(--mono); font-size: 11px; padding: 7px 8px; border-radius: 2px; outline: none; }
+  .inject-send { width: 100%; margin-top: 5px; padding: 6px; background: transparent; border: 1px solid var(--blue); color: var(--blue); font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: all 0.2s; }
+  .inject-send:hover { background: var(--blue); color: var(--bg); }
 
-  .elapsed {
-    font-family: var(--sans);
-    font-size: 32px;
-    font-weight: 300;
-    letter-spacing: 0.05em;
-    color: var(--text);
-    opacity: 0.6;
-  }
+  /* ── ELAPSED ── */
+  .timer-section { padding: 12px 16px; }
+  .elapsed { font-family: var(--sans); font-size: 28px; font-weight: 300; letter-spacing: 0.05em; color: var(--text); opacity: 0.5; }
 
-  /* HUMAN GATE MODAL */
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(6,8,10,0.85);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    backdrop-filter: blur(4px);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
-  }
-
-  .modal-backdrop.open {
-    opacity: 1;
-    pointer-events: all;
-  }
-
-  .modal {
-    background: var(--bg1);
-    border: 1px solid var(--amber);
-    border-radius: 4px;
-    padding: 32px;
-    max-width: 440px;
-    width: 90%;
-    box-shadow: 0 0 60px rgba(232,148,58,0.15), 0 0 0 1px rgba(232,148,58,0.1);
-    transform: translateY(16px);
-    transition: transform 0.3s;
-  }
-
-  .modal-backdrop.open .modal {
-    transform: translateY(0);
-  }
-
-  .modal-title {
-    font-family: var(--sans);
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--amber);
-    margin-bottom: 4px;
-  }
-
-  .modal-sub {
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 20px;
-  }
-
-  .modal-body {
-    background: var(--bg2);
-    border: 1px solid var(--border-dim);
-    border-radius: 2px;
-    padding: 12px;
-    margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .modal-row {
-    display: flex;
-    gap: 12px;
-  }
-
-  .modal-key {
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    width: 80px;
-    flex-shrink: 0;
-  }
-
-  .modal-val {
-    font-size: 11px;
-    color: var(--text);
-  }
-
-  .conf-pill {
-    display: inline-block;
-    padding: 1px 8px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 600;
-  }
-
-  .conf-pill.low { background: var(--red-dim); color: var(--red); border: 1px solid var(--red); }
-
-  .modal-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .btn-approve, .btn-reject {
-    padding: 10px;
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    border-radius: 2px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-approve {
-    background: var(--green-dim);
-    border: 1px solid var(--green);
-    color: var(--green);
-  }
-
-  .btn-approve:hover {
-    background: var(--green);
-    color: var(--bg);
-  }
-
-  .btn-reject {
-    background: var(--red-dim);
-    border: 1px solid var(--red);
-    color: var(--red);
-  }
-
-  .btn-reject:hover {
-    background: var(--red);
-    color: var(--bg);
-  }
-
-  /* BOTTOM STATUS BAR */
-  .status-bar {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    padding: 0 16px;
-    height: 28px;
-    background: var(--bg2);
-    border-top: 1px solid var(--border-dim);
-    font-size: 10px;
-    color: var(--text-dim);
-    letter-spacing: 0.05em;
-  }
-
+  /* ── STATUS BAR ── */
+  .status-bar { grid-column: 1 / -1; display: flex; align-items: center; gap: 20px; padding: 0 16px; background: var(--bg2); border-top: 1px solid var(--border-dim); font-size: 10px; color: var(--text-dim); letter-spacing: 0.05em; }
   .sb-item { display: flex; gap: 6px; }
   .sb-key  { color: var(--text-faint); }
-  .sb-val  { color: var(--text-dim); }
+  .sb-divider { color: var(--text-faint); margin: 0 4px; }
 
-  /* CONTROL ROW */
-  .control-row {
-    display: flex;
-    gap: 8px;
-    padding: 10px 16px;
-    border-top: 1px solid var(--border-dim);
-  }
-
-  .stop-btn {
-    flex: 1;
-    padding: 8px;
-    background: transparent;
-    border: 1px solid var(--red);
-    color: var(--red);
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    cursor: pointer;
-    border-radius: 2px;
-    transition: all 0.2s;
-    display: none;
-  }
-
-  .stop-btn:hover { background: var(--red); color: var(--bg); }
-  .stop-btn.visible { display: block; }
-
-  .clear-btn {
-    flex: 1;
-    padding: 8px;
-    background: transparent;
-    border: 1px solid var(--border-dim);
-    color: var(--text-dim);
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    cursor: pointer;
-    border-radius: 2px;
-    transition: all 0.2s;
-  }
-
+  /* ── CONTROL ROW ── */
+  .control-row { display: flex; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--border-dim); }
+  .clear-btn { flex: 1; padding: 7px; background: transparent; border: 1px solid var(--border-dim); color: var(--text-dim); font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: all 0.2s; }
   .clear-btn:hover { border-color: var(--text-dim); color: var(--text); }
 
-  /* Scrollbar */
-  .tasks-section::-webkit-scrollbar { width: 3px; }
-  .tasks-section::-webkit-scrollbar-thumb { background: var(--border); }
+  /* ── HUMAN GATE MODAL ── */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(6,8,10,0.88); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  .modal-backdrop.open { opacity: 1; pointer-events: all; }
+
+  .modal { background: var(--bg1); border: 1px solid var(--amber); border-radius: 4px; padding: 28px; max-width: 480px; width: 90%; box-shadow: 0 0 60px rgba(232,148,58,0.15); transform: translateY(14px); transition: transform 0.3s; }
+  .modal-backdrop.open .modal { transform: translateY(0); }
+
+  .modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .modal-icon { font-size: 20px; }
+  .modal-title { font-family: var(--sans); font-size: 18px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--amber); }
+  .modal-sub { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 16px; }
+
+  /* autonomy context in modal */
+  .modal-autonomy-ctx { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: rgba(74,158,222,0.06); border: 1px solid rgba(74,158,222,0.2); border-radius: 2px; margin-bottom: 14px; font-size: 10px; color: var(--blue); }
+
+  .modal-body { background: var(--bg2); border: 1px solid var(--border-dim); border-radius: 2px; padding: 12px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .modal-row { display: flex; gap: 12px; }
+  .modal-key { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); width: 80px; flex-shrink: 0; }
+  .modal-val { font-size: 11px; color: var(--text); }
+
+  .conf-pill { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .conf-pill.low { background: var(--red-dim); color: var(--red); border: 1px solid var(--red); }
+
+  /* human edit in modal */
+  .modal-edit-section { margin-bottom: 14px; }
+  .modal-edit-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
+  .modal-edit-input { width: 100%; background: var(--bg2); border: 1px solid var(--border-dim); color: var(--text); font-family: var(--mono); font-size: 11px; padding: 8px; border-radius: 2px; outline: none; resize: vertical; min-height: 52px; }
+  .modal-edit-input:focus { border-color: var(--amber); }
+
+  .modal-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .btn-approve, .btn-override, .btn-reject { padding: 10px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 2px; cursor: pointer; transition: all 0.2s; }
+  .btn-approve { background: var(--green-dim); border: 1px solid var(--green); color: var(--green); }
+  .btn-approve:hover { background: var(--green); color: var(--bg); }
+  .btn-override { background: var(--blue-dim); border: 1px solid var(--blue); color: var(--blue); }
+  .btn-override:hover { background: var(--blue); color: var(--bg); }
+  .btn-reject { background: var(--red-dim); border: 1px solid var(--red); color: var(--red); }
+  .btn-reject:hover { background: var(--red); color: var(--bg); }
 </style>
 </head>
 <body>
@@ -878,29 +365,27 @@
   <!-- HEADER -->
   <header>
     <div class="logo">Loop<span>Ctrl</span></div>
-    <div class="header-sep"></div>
+    <div class="vsep"></div>
     <div class="status-badge">
       <div class="pulse-dot idle" id="mainDot"></div>
       <span id="mainStatus">IDLE</span>
     </div>
-    <div class="header-sep"></div>
+    <div class="vsep"></div>
     <div class="status-badge">
-      <span>MODEL</span>
+      <span style="color:var(--text-faint)">MODEL</span>
       <span style="color:var(--text)">claude-sonnet-4-6</span>
     </div>
+
+    <div class="autonomy-header">
+      <div class="autonomy-label-h">Autonomy Mode</div>
+      <div class="autonomy-mode-badge copilot" id="autonomyBadge">Copilot</div>
+    </div>
+
+    <div class="vsep"></div>
     <div class="header-metrics">
-      <div class="hm">
-        <div class="hm-label">Iterations</div>
-        <div class="hm-value" id="hIter">0</div>
-      </div>
-      <div class="hm">
-        <div class="hm-label">Tasks Done</div>
-        <div class="hm-value" id="hDone">0</div>
-      </div>
-      <div class="hm">
-        <div class="hm-label">Success Rate</div>
-        <div class="hm-value" id="hRate">—</div>
-      </div>
+      <div class="hm"><div class="hm-label">Iterations</div><div class="hm-value" id="hIter">0</div></div>
+      <div class="hm"><div class="hm-label">Tasks Done</div><div class="hm-value" id="hDone">0</div></div>
+      <div class="hm"><div class="hm-label">Human Gates</div><div class="hm-value" id="hGates">0</div></div>
     </div>
   </header>
 
@@ -909,58 +394,72 @@
     <div class="panel-header">Goal Definition</div>
     <div class="goal-area">
       <div class="goal-label">Objective</div>
-      <textarea id="goalInput" placeholder="Describe the goal for the agent to execute autonomously...
+      <textarea id="goalInput" placeholder="Describe the agent's goal...
 
-Example:
-Run pytest on src/, identify failures, patch each bug, re-run until all tests pass."></textarea>
+e.g. Run pytest on src/, fix all failures, re-run until green."></textarea>
       <button class="run-btn" id="runBtn" onclick="startLoop()">
         <span>▶ Execute Loop</span>
       </button>
     </div>
 
+    <!-- AUTONOMY SLIDER — Karpathy's autonomy slider concept -->
+    <div class="autonomy-section">
+      <div class="autonomy-top">
+        <div class="autonomy-title">Autonomy Slider</div>
+        <div class="autonomy-value-label" id="autoValLabel" style="color:var(--blue)">Copilot</div>
+      </div>
+      <div class="slider-track">
+        <div class="slider-fill" id="sliderFill" style="width:25%; background: var(--blue)"></div>
+        <input type="range" class="autonomy-range" id="autonomySlider" min="0" max="100" value="25">
+      </div>
+      <div class="autonomy-ticks">
+        <span class="autonomy-tick active" onclick="setAutonomy(0)">Manual</span>
+        <span class="autonomy-tick" onclick="setAutonomy(33)">Copilot</span>
+        <span class="autonomy-tick" onclick="setAutonomy(66)">Partial</span>
+        <span class="autonomy-tick" onclick="setAutonomy(100)">Auto</span>
+      </div>
+      <div class="autonomy-desc" id="autoDesc" style="margin-top:8px">
+        Agent asks approval before every task. You stay in full control — Iron Man suit with hand on the trigger.
+      </div>
+    </div>
+
     <div class="config-section">
-      <div class="panel-header" style="padding:0 0 8px 0;border:none;font-size:9px">Config</div>
-      <div class="config-row">
-        <div class="config-key">Max Iter</div>
-        <input class="config-val" id="cfgMaxIter" type="number" value="20" min="1" max="100">
-      </div>
-      <div class="config-row">
-        <div class="config-key">Max Retry</div>
-        <input class="config-val" id="cfgMaxRetry" type="number" value="3" min="0" max="10">
-      </div>
-      <div class="config-row">
-        <div class="config-key">Timeout (s)</div>
-        <input class="config-val" id="cfgTimeout" type="number" value="60" min="5" max="300">
-      </div>
-      <div class="config-row">
-        <div class="config-key">Confidence</div>
-        <input class="config-val" id="cfgConf" type="number" value="0.8" step="0.05" min="0" max="1">
-      </div>
+      <div class="panel-header" style="padding:0 0 8px;border:none;font-size:9px">Config</div>
+      <div class="config-row"><div class="config-key">Max Iter</div><input class="config-val" id="cfgMaxIter" type="number" value="20" min="1" max="100"></div>
+      <div class="config-row"><div class="config-key">Max Retry</div><input class="config-val" id="cfgMaxRetry" type="number" value="3" min="0" max="10"></div>
+      <div class="config-row"><div class="config-key">Timeout (s)</div><input class="config-val" id="cfgTimeout" type="number" value="60" min="5" max="300"></div>
     </div>
 
     <div class="panel-header">Task Queue</div>
     <div class="tasks-section" id="taskCards">
-      <div style="padding:16px;font-size:10px;color:var(--text-faint);letter-spacing:0.1em;text-transform:uppercase">
-        No tasks yet
-      </div>
+      <div style="padding:14px 16px;font-size:10px;color:var(--text-faint);letter-spacing:0.1em;text-transform:uppercase">No tasks yet</div>
     </div>
 
     <div class="control-row">
-      <button class="stop-btn" id="stopBtn" onclick="stopLoop()">■ Stop</button>
       <button class="clear-btn" onclick="clearAll()">Clear Trace</button>
     </div>
   </div>
 
-  <!-- CENTER — TRACE -->
+  <!-- CENTER PANEL -->
   <div class="center-panel">
-    <div class="goal-display" id="goalDisplay" style="display:none">
+    <div class="goal-display" id="goalDisplay">
       <div class="goal-display-label">Active Goal</div>
       <div class="goal-display-text" id="goalDisplayText"></div>
+    </div>
+
+    <!-- Iron Man suit banner -->
+    <div class="ironman-banner" id="ironmanBanner">
+      <div class="ironman-icon">⚙</div>
+      <div>
+        <strong>Partial Autonomy Active</strong> — agent augments your judgment, you stay in the loop.
+        <span id="ironmanMode" style="margin-left:6px;opacity:0.7"></span>
+      </div>
     </div>
 
     <div id="emptyState" class="empty-state">
       <div class="empty-glyph">↺</div>
       <div class="empty-text">Awaiting goal</div>
+      <div class="empty-sub">Set autonomy level, define goal, execute loop. Agent plans → executes → evaluates → loops until done.</div>
     </div>
 
     <div class="trace-log" id="traceLog" style="display:none"></div>
@@ -968,7 +467,7 @@ Run pytest on src/, identify failures, patch each bug, re-run until all tests pa
 
   <!-- RIGHT PANEL -->
   <div class="right-panel">
-    <div class="panel-header">Loop Metrics</div>
+    <div class="panel-header">Metrics</div>
 
     <div class="metric-block">
       <div class="metric-label">Iteration</div>
@@ -979,34 +478,37 @@ Run pytest on src/, identify failures, patch each bug, re-run until all tests pa
     <div class="metric-block">
       <div class="metric-label">Last Confidence</div>
       <div class="metric-big" id="mConf">—</div>
-      <div class="metric-sub">threshold: 0.80</div>
+      <div class="metric-sub" id="mConfSub">gate threshold varies by autonomy</div>
     </div>
 
-    <div class="metric-block">
-      <div class="panel-header" style="padding:0 0 12px 0;border:none;font-size:9px">Loop Phase</div>
-      <div class="cycle-nodes" id="cycleNodes">
-        <div class="cycle-node" id="cn-plan">
-          <span class="cycle-name">Plan</span>
-          <span class="cycle-task-id" id="cn-plan-id"></span>
-        </div>
-        <div class="cycle-node" id="cn-exec">
-          <span class="cycle-name">Execute</span>
-          <span class="cycle-task-id" id="cn-exec-id"></span>
-        </div>
-        <div class="cycle-node" id="cn-eval">
-          <span class="cycle-name">Evaluate</span>
-          <span class="cycle-task-id" id="cn-eval-id"></span>
-        </div>
-        <div class="cycle-node" id="cn-done">
-          <span class="cycle-name">Complete</span>
-          <span class="cycle-task-id" id="cn-done-id"></span>
-        </div>
+    <div class="cycle-diagram">
+      <div class="metric-label">Loop Phase</div>
+      <div class="cycle-nodes">
+        <div class="cycle-node" id="cn-plan"><span class="cycle-name">Plan</span><span class="cycle-badge" id="cn-plan-b"></span></div>
+        <div class="cycle-node" id="cn-exec"><span class="cycle-name">Execute</span><span class="cycle-badge" id="cn-exec-b"></span></div>
+        <div class="cycle-node" id="cn-eval"><span class="cycle-name">Evaluate</span><span class="cycle-badge" id="cn-eval-b"></span></div>
+        <div class="cycle-node" id="cn-done"><span class="cycle-name">Complete</span><span class="cycle-badge" id="cn-done-b"></span></div>
       </div>
     </div>
 
     <div class="sparkline-section">
       <div class="metric-label">Confidence History</div>
-      <canvas class="sparkline-canvas" id="sparkCanvas" width="228" height="48"></canvas>
+      <canvas class="sparkline-canvas" id="sparkCanvas" width="248" height="44"></canvas>
+    </div>
+
+    <!-- HUMAN OVERRIDE CONTROLS — Karpathy's human-in-the-loop panel -->
+    <div class="override-section">
+      <div class="override-title">Human Override</div>
+      <div class="override-btns">
+        <div class="ob ob-pause"  onclick="pauseLoop()">⏸ Pause</div>
+        <div class="ob ob-resume" onclick="resumeLoop()">▶ Resume</div>
+        <div class="ob ob-inject" onclick="toggleInject()">✎ Inject</div>
+        <div class="ob ob-stop"   onclick="stopLoop()">■ Stop</div>
+      </div>
+      <div class="inject-area" id="injectArea">
+        <input class="inject-input" id="injectInput" placeholder="Override instruction for next step..." maxlength="200">
+        <button class="inject-send" onclick="sendInject()">Send Override</button>
+      </div>
     </div>
 
     <div class="timer-section">
@@ -1015,108 +517,214 @@ Run pytest on src/, identify failures, patch each bug, re-run until all tests pa
     </div>
   </div>
 
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <div class="sb-item"><span class="sb-key">AUTONOMY</span><span id="sbAutonomy">Manual (ask every step)</span></div>
+    <span class="sb-divider">·</span>
+    <div class="sb-item"><span class="sb-key">GATE THRESHOLD</span><span id="sbThreshold">every task</span></div>
+    <span class="sb-divider">·</span>
+    <div class="sb-item"><span class="sb-key">HUMAN GATES HIT</span><span id="sbGates">0</span></div>
+    <span class="sb-divider">·</span>
+    <div class="sb-item"><span class="sb-key">OVERRIDES INJECTED</span><span id="sbInjects">0</span></div>
+  </div>
+
 </div>
 
-<!-- HUMAN GATE MODAL -->
+<!-- HUMAN GATE MODAL — Karpathy: verification GUI + human-in-the-loop -->
 <div class="modal-backdrop" id="humanGateModal">
   <div class="modal">
-    <div class="modal-title">Human Gate</div>
-    <div class="modal-sub">Low confidence — approval required</div>
-    <div class="modal-body">
-      <div class="modal-row">
-        <div class="modal-key">Task</div>
-        <div class="modal-val" id="mgTaskId">—</div>
-      </div>
-      <div class="modal-row">
-        <div class="modal-key">Reason</div>
-        <div class="modal-val" id="mgReason">—</div>
-      </div>
-      <div class="modal-row">
-        <div class="modal-key">Confidence</div>
-        <div class="modal-val"><span class="conf-pill low" id="mgConf">—</span></div>
-      </div>
-      <div class="modal-row">
-        <div class="modal-key">Suggestion</div>
-        <div class="modal-val" id="mgSuggestion">—</div>
-      </div>
+    <div class="modal-header">
+      <div class="modal-icon">⚠</div>
+      <div class="modal-title">Human Gate</div>
     </div>
+    <div class="modal-sub">Agent paused — your judgment required</div>
+
+    <div class="modal-autonomy-ctx">
+      ⚙ Autonomy mode: <strong id="mgAutoMode" style="margin-left:4px">—</strong>
+      &nbsp;·&nbsp; Confidence below gate threshold
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-row"><div class="modal-key">Task</div><div class="modal-val" id="mgTaskId">—</div></div>
+      <div class="modal-row"><div class="modal-key">Reason</div><div class="modal-val" id="mgReason">—</div></div>
+      <div class="modal-row"><div class="modal-key">Confidence</div><div class="modal-val"><span class="conf-pill low" id="mgConf">—</span></div></div>
+      <div class="modal-row"><div class="modal-key">Suggestion</div><div class="modal-val" id="mgSuggestion">—</div></div>
+    </div>
+
+    <!-- Human can inject correction before approving -->
+    <div class="modal-edit-section">
+      <div class="modal-edit-label">Your Correction (optional — overrides agent suggestion)</div>
+      <textarea class="modal-edit-input" id="mgCorrection" placeholder="Leave blank to use agent suggestion, or type your own fix..."></textarea>
+    </div>
+
     <div class="modal-actions">
-      <button class="btn-approve" onclick="resolveGate(true)">✓ Approve</button>
-      <button class="btn-reject" onclick="resolveGate(false)">✗ Reject</button>
+      <button class="btn-approve"  onclick="resolveGate('approve')">✓ Approve</button>
+      <button class="btn-override" onclick="resolveGate('override')">✎ Override</button>
+      <button class="btn-reject"   onclick="resolveGate('reject')">✗ Stop</button>
     </div>
   </div>
 </div>
 
 <script>
-// ─── State ────────────────────────────────────────────────────────────────────
+// ── Autonomy levels (Karpathy's autonomy slider) ───────────────────────────
+const AUTONOMY_LEVELS = [
+  {
+    name: "Manual", badge: "copilot", color: "var(--blue)",
+    threshold: 999,   // gate every task
+    desc: "Agent asks approval before every task. You stay in full control — Iron Man suit with hand on the trigger.",
+    statusDesc: "Manual (ask every step)", thresholdLabel: "every task",
+  },
+  {
+    name: "Copilot", badge: "copilot", color: "var(--blue)",
+    threshold: 0.9,
+    desc: "Agent runs confidently, gates only on uncertain steps (conf < 0.90). You review outputs freely.",
+    statusDesc: "Copilot (gate < 90%)", thresholdLabel: "conf < 0.90",
+  },
+  {
+    name: "Partial", badge: "partial", color: "var(--amber)",
+    threshold: 0.7,
+    desc: "Iron Man suit mode — agent has real autonomy, gates on low-confidence steps (conf < 0.70). Verify key outputs.",
+    statusDesc: "Partial autonomy (gate < 70%)", thresholdLabel: "conf < 0.70",
+  },
+  {
+    name: "Auto", badge: "auto", color: "var(--green)",
+    threshold: 0.0,   // never gate
+    desc: "Full autonomy — agent loops until done or fails. No human gates. Monitor the trace for anomalies.",
+    statusDesc: "Full auto (no gates)", thresholdLabel: "none",
+  },
+];
+
+function autonomyIndexFromValue(v) {
+  if (v <= 12)  return 0;
+  if (v <= 49)  return 1;
+  if (v <= 79)  return 2;
+  return 3;
+}
+
+function getAutonomy() {
+  return AUTONOMY_LEVELS[autonomyIndexFromValue(parseInt(document.getElementById("autonomySlider").value))];
+}
+
+// ── State ──────────────────────────────────────────────────────────────────
 let state = {
-  running: false,
-  iteration: 0,
-  tasksTotal: 0,
-  tasksDone: 0,
-  startTime: null,
-  confidenceHistory: [],
-  gateResolve: null,
-  timerInterval: null,
-  demoTimeout: null,
+  running: false, paused: false,
+  iteration: 0, tasksDone: 0, tasksTotal: 0,
+  gatesHit: 0, injectsUsed: 0,
+  startTime: null, timerInterval: null, demoIdx: 0,
+  confidenceHistory: [], gateResolve: null,
+  pendingInject: null, nextTimeout: null,
 };
 
-// ─── Demo simulation data ─────────────────────────────────────────────────────
+// ── Demo data ──────────────────────────────────────────────────────────────
 const DEMO_TASKS = [
-  { id: "t1", description: "Run pytest on src/", tool: "bash" },
-  { id: "t2", description: "Read failing test file", tool: "file" },
-  { id: "t3", description: "Identify root cause", tool: "llm"  },
-  { id: "t4", description: "Patch auth.py bug", tool: "file" },
-  { id: "t5", description: "Re-run test suite", tool: "bash" },
+  { id: "t1", description: "Run pytest on src/",           tool: "bash" },
+  { id: "t2", description: "Read failing test file",       tool: "file" },
+  { id: "t3", description: "Identify root cause",          tool: "llm"  },
+  { id: "t4", description: "Patch auth.py bug",            tool: "file" },
+  { id: "t5", description: "Re-run full test suite",       tool: "bash" },
 ];
 
 const DEMO_EVENTS = [
-  { delay: 400,  type: "PLAN",  main: "Decomposed goal into 5 tasks", sub: "tasks: t1 → t2 → t3 → t4 → t5", phase: "plan" },
-  { delay: 900,  type: "EXEC",  main: "Running: pytest src/", sub: "tool: bash — task t1", taskId: "t1", tool: "bash", phase: "exec" },
-  { delay: 1800, type: "EVAL",  main: "Evaluating task t1 result", sub: "checking exit code + output", phase: "eval", conf: 0.91 },
-  { delay: 2300, type: "RETRY", main: "2 tests failed — retrying with refinement", sub: "suggestion: check mock paths in test_auth.py", taskId: "t1", phase: "exec" },
-  { delay: 3000, type: "EXEC",  main: "Running: pytest src/ -x", sub: "tool: bash — task t1 (retry 1)", taskId: "t1", tool: "bash", phase: "exec" },
-  { delay: 4000, type: "EVAL",  main: "Still 1 failure — escalating", sub: "confidence below threshold", phase: "eval", conf: 0.62, gate: true, gateTask: "t1", gateReason: "Test still failing after mock path fix", gateSug: "Check if the fixture teardown is resetting state" },
-  { delay: 6000, type: "OK",    main: "Task t1 complete", sub: "exit 0 — 1 failing test identified", taskId: "t1", phase: "exec", doneId: "t1" },
-  { delay: 6500, type: "EXEC",  main: "Reading: src/tests/test_auth.py", sub: "tool: file — task t2", taskId: "t2", tool: "file", phase: "exec" },
-  { delay: 7300, type: "EVAL",  main: "File read successful", sub: "1842 bytes loaded", phase: "eval", conf: 0.98 },
-  { delay: 7600, type: "OK",    main: "Task t2 complete", sub: "test file contents in scratchpad", taskId: "t2", doneId: "t2" },
-  { delay: 8100, type: "EXEC",  main: "LLM: Analyzing failure root cause", sub: "tool: llm — task t3", taskId: "t3", tool: "llm", phase: "exec" },
-  { delay: 9500, type: "EVAL",  main: "Root cause identified", sub: "token expiry uses < not <=", phase: "eval", conf: 0.95 },
-  { delay: 9800, type: "OK",    main: "Task t3 complete", sub: "suggestion logged to scratchpad", taskId: "t3", doneId: "t3" },
-  { delay: 10300, type: "EXEC", main: "Writing fix to src/auth.py", sub: "tool: file — task t4", taskId: "t4", tool: "file", phase: "exec" },
-  { delay: 11000, type: "EVAL", main: "File written successfully", sub: "patch applied: line 47", phase: "eval", conf: 0.99 },
-  { delay: 11300, type: "OK",   main: "Task t4 complete", sub: "src/auth.py patched", taskId: "t4", doneId: "t4" },
-  { delay: 11800, type: "EXEC", main: "Running: pytest src/ --tb=short", sub: "tool: bash — task t5", taskId: "t5", tool: "bash", phase: "exec" },
-  { delay: 13200, type: "EVAL", main: "All tests passing", sub: "5 passed, 0 failed", phase: "eval", conf: 1.0 },
-  { delay: 13500, type: "OK",   main: "Task t5 complete", sub: "test suite green ✓", taskId: "t5", doneId: "t5" },
-  { delay: 14000, type: "DONE", main: "Goal achieved", sub: "all 5 tasks complete — 13 iterations", phase: "done" },
+  { delay:400,  type:"PLAN",  main:"Decomposed goal into 5 tasks", sub:"t1 → t2 → t3 → t4 → t5", phase:"plan",
+    output:"TaskList: run tests, read file, diagnose, patch, verify" },
+  { delay:900,  type:"EXEC",  main:"Running: pytest src/", sub:"bash — task t1", taskId:"t1", phase:"exec",
+    output:"FAILED test_auth.py::test_token_expiry\nFAILED test_auth.py::test_refresh\n2 failed, 18 passed" },
+  { delay:1800, type:"EVAL",  main:"Evaluating task t1", sub:"checking exit code + stderr", phase:"eval", conf:0.91,
+    output:'{"status":"ok","reason":"failures identified","confidence":0.91}' },
+  { delay:2200, type:"OK",    main:"Task t1 complete", sub:"2 failures identified", taskId:"t1", doneId:"t1" },
+  { delay:2700, type:"EXEC",  main:"Reading: src/tests/test_auth.py", sub:"file — task t2", taskId:"t2", phase:"exec",
+    output:"def test_token_expiry():\n    token = create_token(expires_in=0)\n    assert is_valid(token) == False  # fails: uses < not <=" },
+  { delay:3500, type:"EVAL",  main:"File read successful", sub:"1842 bytes loaded", phase:"eval", conf:0.98,
+    output:'{"status":"ok","reason":"file contents loaded","confidence":0.98}' },
+  { delay:3800, type:"OK",    main:"Task t2 complete", sub:"test file in scratchpad", taskId:"t2", doneId:"t2" },
+  { delay:4300, type:"EXEC",  main:"LLM: Diagnosing root cause", sub:"llm — task t3", taskId:"t3", phase:"exec",
+    output:"Root cause: token expiry check in auth.py:47 uses `expiry < now` instead of `expiry <= now`. Edge case when token expires at exactly current second." },
+  { delay:5800, type:"EVAL",  main:"Root cause identified — low confidence", sub:"complex logic, needs human review", phase:"eval", conf:0.61,
+    gate:true, gateTask:"t3", gateReason:"Expiry edge case may have broader implications in auth middleware", gateSug:"Confirm fix scope before patching",
+    output:'{"status":"retry","reason":"low confidence on fix scope","confidence":0.61}' },
+  { delay:7500, type:"OK",    main:"Task t3 complete (human approved)", sub:"fix scope confirmed", taskId:"t3", doneId:"t3" },
+  { delay:8000, type:"EXEC",  main:"Writing fix to src/auth.py", sub:"file — task t4", taskId:"t4", phase:"exec",
+    output:"--- a/src/auth.py\n+++ b/src/auth.py\n@@ -47 @@\n- if token.expiry < now:\n+ if token.expiry <= now:" },
+  { delay:8700, type:"EVAL",  main:"Patch applied — verifying", sub:"checking file write success", phase:"eval", conf:0.99,
+    output:'{"status":"ok","reason":"patch written","confidence":0.99}' },
+  { delay:9000, type:"OK",    main:"Task t4 complete", sub:"src/auth.py patched at line 47", taskId:"t4", doneId:"t4" },
+  { delay:9500, type:"EXEC",  main:"Running: pytest src/ --tb=short", sub:"bash — task t5", taskId:"t5", phase:"exec",
+    output:"5 passed, 0 failed in 1.24s\n✓ test_token_expiry\n✓ test_refresh" },
+  { delay:10800, type:"EVAL", main:"All tests passing", sub:"exit 0 — green", phase:"eval", conf:1.0,
+    output:'{"status":"ok","reason":"all tests pass","confidence":1.0}' },
+  { delay:11100, type:"OK",   main:"Task t5 complete", sub:"test suite green ✓", taskId:"t5", doneId:"t5" },
+  { delay:11500, type:"DONE", main:"Goal achieved in 11 iterations", sub:"5/5 tasks complete — 1 human gate", phase:"done" },
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function setPhase(phase) {
-  ["plan","exec","eval","done"].forEach(p => {
-    const el = document.getElementById(`cn-${p}`);
-    if (!el) return;
-    el.classList.remove("active","done");
-  });
-  const el = document.getElementById(`cn-${phase}`);
-  if (el) el.classList.add("active");
+// ── Autonomy slider ────────────────────────────────────────────────────────
+document.getElementById("autonomySlider").addEventListener("input", function() {
+  updateAutonomyUI(parseInt(this.value));
+});
+
+function setAutonomy(v) {
+  document.getElementById("autonomySlider").value = v;
+  updateAutonomyUI(v);
 }
 
-function markPhaseDone(phase) {
-  const el = document.getElementById(`cn-${phase}`);
+function updateAutonomyUI(v) {
+  const idx = autonomyIndexFromValue(v);
+  const lvl = AUTONOMY_LEVELS[idx];
+  const fill = document.getElementById("sliderFill");
+  fill.style.width = (v === 0 ? 0 : v) + "%";
+  fill.style.background = lvl.color;
+  document.getElementById("autoValLabel").textContent = lvl.name;
+  document.getElementById("autoValLabel").style.color = lvl.color;
+  document.getElementById("autoDesc").textContent = lvl.desc;
+  document.getElementById("autonomyBadge").className = `autonomy-mode-badge ${lvl.badge}`;
+  document.getElementById("autonomyBadge").textContent = lvl.name;
+  document.getElementById("sbAutonomy").textContent = lvl.statusDesc;
+  document.getElementById("sbThreshold").textContent = lvl.thresholdLabel;
+
+  // ticks
+  document.querySelectorAll(".autonomy-tick").forEach((el, i) => {
+    el.classList.toggle("active", i === idx);
+  });
+
+  // ironman banner
+  const banner = document.getElementById("ironmanBanner");
+  if (idx === 2) {
+    banner.classList.add("show");
+    document.getElementById("ironmanMode").textContent = "gate threshold: conf < 0.70";
+  } else {
+    banner.classList.remove("show");
+  }
+}
+
+// init slider
+updateAutonomyUI(25);
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function shouldGate(ev) {
+  const lvl = getAutonomy();
+  if (lvl.threshold >= 999) return true;        // manual: always gate
+  if (lvl.threshold <= 0.0) return false;       // auto: never gate
+  if (ev.gate) return true;                      // explicit gate event
+  if (ev.conf !== undefined && ev.conf < lvl.threshold) return true;
+  return false;
+}
+
+function setPhase(p) {
+  ["plan","exec","eval","done"].forEach(n => document.getElementById(`cn-${n}`)?.classList.remove("active","done"));
+  document.getElementById(`cn-${p}`)?.classList.add("active");
+}
+
+function markPhaseDone(p) {
+  const el = document.getElementById(`cn-${p}`);
   if (el) { el.classList.remove("active"); el.classList.add("done"); }
 }
 
-function updateConfMeter(val) {
-  if (val === null || val === undefined) return;
-  state.confidenceHistory.push(val);
-  const pct = Math.round(val * 100);
-  const mConf = document.getElementById("mConf");
-  mConf.textContent = pct + "%";
-  mConf.className = "metric-big " + (val >= 0.8 ? "green" : "red");
-  document.getElementById("cfgConf").value;
+function updateConf(v) {
+  if (v == null) return;
+  state.confidenceHistory.push(v);
+  const pct = Math.round(v * 100);
+  const m = document.getElementById("mConf");
+  m.textContent = pct + "%";
+  m.className = "metric-big " + (v >= 0.8 ? "green" : "red");
   drawSparkline();
 }
 
@@ -1124,69 +732,62 @@ function drawSparkline() {
   const canvas = document.getElementById("sparkCanvas");
   const ctx = canvas.getContext("2d");
   const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
-
-  const hist = state.confidenceHistory;
+  ctx.clearRect(0,0,W,H);
+  const hist = state.confidenceHistory.slice(-24);
   if (hist.length < 2) return;
+  const step = W / (hist.length - 1);
 
-  const points = hist.slice(-20);
-  const step = W / (points.length - 1);
+  // threshold line
+  const lvl = getAutonomy();
+  if (lvl.threshold > 0 && lvl.threshold < 1) {
+    ctx.beginPath(); ctx.strokeStyle = "rgba(232,148,58,0.3)"; ctx.lineWidth = 1; ctx.setLineDash([2,3]);
+    ctx.moveTo(0, H*(1-lvl.threshold)); ctx.lineTo(W, H*(1-lvl.threshold)); ctx.stroke(); ctx.setLineDash([]);
+  }
 
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,"rgba(61,214,140,0.25)"); grad.addColorStop(1,"rgba(61,214,140,0)");
   ctx.beginPath();
-  ctx.strokeStyle = "rgba(232,148,58,0.4)";
-  ctx.lineWidth = 1;
-  ctx.setLineDash([2,3]);
-  ctx.moveTo(0, H * (1 - 0.8));
-  ctx.lineTo(W, H * (1 - 0.8));
-  ctx.stroke();
-  ctx.setLineDash([]);
+  hist.forEach((v,i) => { const x=i*step, y=H*(1-v); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+  ctx.lineTo((hist.length-1)*step,H); ctx.lineTo(0,H); ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
 
-  const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, "rgba(61,214,140,0.3)");
-  grad.addColorStop(1, "rgba(61,214,140,0)");
+  ctx.beginPath(); ctx.strokeStyle="#3dd68c"; ctx.lineWidth=1.5;
+  hist.forEach((v,i) => { const x=i*step, y=H*(1-v); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); }); ctx.stroke();
 
-  ctx.beginPath();
-  points.forEach((v, i) => { const x = i * step, y = H * (1 - v); i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y); });
-  ctx.lineTo((points.length-1)*step, H);
-  ctx.lineTo(0, H);
-  ctx.closePath();
-  ctx.fillStyle = grad;
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.strokeStyle = "#3dd68c";
-  ctx.lineWidth = 1.5;
-  points.forEach((v, i) => { const x = i * step, y = H * (1 - v); i === 0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y); });
-  ctx.stroke();
-
-  const last = points[points.length-1];
-  const lx = (points.length-1)*step, ly = H*(1-last);
-  ctx.beginPath();
-  ctx.arc(lx, ly, 3, 0, Math.PI*2);
-  ctx.fillStyle = "#3dd68c";
-  ctx.fill();
+  const lx=(hist.length-1)*step, ly=H*(1-hist[hist.length-1]);
+  ctx.beginPath(); ctx.arc(lx,ly,3,0,Math.PI*2); ctx.fillStyle="#3dd68c"; ctx.fill();
 }
 
+let verifyIdCounter = 0;
 function addEvent(ev) {
   state.iteration++;
   document.getElementById("hIter").textContent = state.iteration;
   document.getElementById("mIter").textContent = state.iteration;
+  if (ev.conf != null) updateConf(ev.conf);
+  if (ev.phase) setPhase(ev.phase);
+
+  if (ev.doneId) {
+    state.tasksDone++;
+    document.getElementById("hDone").textContent = state.tasksDone;
+    updateTaskCard(ev.doneId, "ok", ev.output || "");
+    markPhaseDone("exec");
+  } else if (ev.taskId) {
+    updateTaskCard(ev.taskId, "running");
+  }
 
   const log = document.getElementById("traceLog");
+  const vid = "v" + (++verifyIdCounter);
   const div = document.createElement("div");
   div.className = `trace-event ${ev.type}`;
 
   let confHtml = "";
-  if (ev.conf !== undefined) {
+  if (ev.conf != null) {
     const pct = Math.round(ev.conf * 100);
     const cls = ev.conf >= 0.8 ? "high" : ev.conf >= 0.6 ? "medium" : "low";
-    confHtml = `<div class="ev-confidence">
-      <div class="conf-bar"><div class="conf-fill ${cls}" style="width:${pct}%"></div></div>
-      <span>${pct}%</span>
-    </div>`;
-    updateConfMeter(ev.conf);
+    confHtml = `<div class="ev-conf"><div class="conf-bar"><div class="conf-fill ${cls}" style="width:${pct}%"></div></div><span class="conf-pct">${pct}%</span></div>`;
   }
 
+  const hasOutput = !!ev.output;
   div.innerHTML = `
     <div class="ev-iter">#${state.iteration}</div>
     <div class="ev-tag ${ev.type}">${ev.type}</div>
@@ -1195,27 +796,40 @@ function addEvent(ev) {
       ${ev.sub ? `<div class="ev-sub">${ev.sub}</div>` : ""}
       ${confHtml}
     </div>
+    ${hasOutput ? `<button class="verify-btn" id="${vid}-btn" onclick="toggleVerify('${vid}')">Verify</button>` : "<div></div>"}
   `;
+
+  if (hasOutput) {
+    const drawer = document.createElement("div");
+    drawer.className = "verify-drawer";
+    drawer.id = vid + "-drawer";
+    drawer.textContent = ev.output;
+    // make it span full width
+    drawer.style.gridColumn = "2 / -1";
+    div.appendChild(drawer);
+  }
+
   log.appendChild(div);
   log.scrollTop = log.scrollHeight;
-
-  if (ev.phase) setPhase(ev.phase);
-  if (ev.doneId) {
-    state.tasksDone++;
-    document.getElementById("hDone").textContent = state.tasksDone;
-    updateTaskCard(ev.doneId, "ok");
-    markPhaseDone("exec");
-    const rate = Math.round((state.tasksDone / state.tasksTotal) * 100);
-    document.getElementById("hRate").textContent = rate + "%";
-  }
-  if (ev.taskId && !ev.doneId) updateTaskCard(ev.taskId, "running");
 }
 
-function updateTaskCard(id, status) {
+function toggleVerify(vid) {
+  const drawer = document.getElementById(vid + "-drawer");
+  const btn    = document.getElementById(vid + "-btn");
+  if (!drawer) return;
+  const open = drawer.classList.toggle("open");
+  btn.textContent = open ? "Hide" : "Verify";
+  btn.classList.toggle("verified", open);
+}
+
+function updateTaskCard(id, status, output) {
   const card = document.getElementById(`tc-${id}`);
   if (!card) return;
-  const dot = card.querySelector(".task-status-icon");
-  dot.className = `task-status-icon ${status}`;
+  card.querySelector(".task-status-icon").className = `task-status-icon ${status}`;
+  if (output) {
+    const od = document.getElementById(`to-${id}`);
+    if (od) { od.textContent = output; }
+  }
 }
 
 function renderTaskCards(tasks) {
@@ -1223,176 +837,213 @@ function renderTaskCards(tasks) {
   el.innerHTML = "";
   tasks.forEach(t => {
     const d = document.createElement("div");
-    d.className = "task-card";
-    d.id = `tc-${t.id}`;
     d.innerHTML = `
-      <div class="task-status-icon pending"></div>
-      <div class="task-info">
-        <div class="task-id">${t.id}</div>
-        <div class="task-desc">${t.description}</div>
+      <div class="task-card" id="tc-${t.id}" onclick="toggleTaskOutput('${t.id}')">
+        <div class="task-status-icon pending"></div>
+        <div class="task-info">
+          <div class="task-id">${t.id}</div>
+          <div class="task-desc">${t.description}</div>
+        </div>
+        <div class="task-tool-badge">${t.tool}</div>
       </div>
-      <div class="task-tool-badge">${t.tool}</div>
+      <div class="task-output" id="to-${t.id}"></div>
     `;
-    el.appendChild(d);
+    el.appendChild(d.firstElementChild);
+    el.appendChild(d.lastElementChild);
   });
+}
+
+function toggleTaskOutput(id) {
+  const od = document.getElementById(`to-${id}`);
+  if (od) od.classList.toggle("open");
 }
 
 function showGate(ev) {
   return new Promise(resolve => {
     state.gateResolve = resolve;
-    document.getElementById("mgTaskId").textContent = ev.gateTask;
-    document.getElementById("mgReason").textContent = ev.gateReason;
-    document.getElementById("mgConf").textContent = Math.round(ev.conf * 100) + "%";
+    state.gatesHit++;
+    document.getElementById("hGates").textContent = state.gatesHit;
+    document.getElementById("sbGates").textContent = state.gatesHit;
+    const lvl = getAutonomy();
+    document.getElementById("mgAutoMode").textContent = lvl.name;
+    document.getElementById("mgTaskId").textContent = ev.gateTask || ev.taskId || "—";
+    document.getElementById("mgReason").textContent = ev.gateReason || ev.sub || "—";
+    document.getElementById("mgConf").textContent = ev.conf != null ? Math.round(ev.conf*100)+"%" : "—";
     document.getElementById("mgSuggestion").textContent = ev.gateSug || "—";
+    document.getElementById("mgCorrection").value = "";
     document.getElementById("humanGateModal").classList.add("open");
+
+    addEvent({ type:"WAIT", main:`Human gate — ${lvl.name} mode requires approval`, sub: ev.gateReason || "low confidence", output: null });
+    updateTaskCard(ev.gateTask || ev.taskId, "waiting");
   });
 }
 
-function resolveGate(approved) {
+function resolveGate(decision) {
   document.getElementById("humanGateModal").classList.remove("open");
   if (state.gateResolve) {
-    state.gateResolve(approved);
+    state.gateResolve(decision);
     state.gateResolve = null;
   }
 }
 
+// ── Override controls ──────────────────────────────────────────────────────
+function pauseLoop() {
+  state.paused = true;
+  document.getElementById("mainDot").className = "pulse-dot paused";
+  document.getElementById("mainStatus").textContent = "PAUSED";
+  addEvent({ type:"WAIT", main:"Loop paused by human override", sub:"press Resume to continue" });
+}
+
+function resumeLoop() {
+  if (!state.running) return;
+  state.paused = false;
+  document.getElementById("mainDot").className = "pulse-dot amber";
+  document.getElementById("mainStatus").textContent = "RUNNING";
+  addEvent({ type:"EXEC", main:"Loop resumed", sub:"continuing from last task" });
+}
+
+function toggleInject() {
+  document.getElementById("injectArea").classList.toggle("open");
+}
+
+function sendInject() {
+  const val = document.getElementById("injectInput").value.trim();
+  if (!val) return;
+  state.pendingInject = val;
+  state.injectsUsed++;
+  document.getElementById("sbInjects").textContent = state.injectsUsed;
+  addEvent({ type:"PLAN", main:"Human override injected", sub: val });
+  document.getElementById("injectInput").value = "";
+  document.getElementById("injectArea").classList.remove("open");
+}
+
+// ── Timer ──────────────────────────────────────────────────────────────────
 function startTimer() {
   state.startTime = Date.now();
   state.timerInterval = setInterval(() => {
     const s = Math.floor((Date.now() - state.startTime) / 1000);
-    const m = Math.floor(s / 60);
     document.getElementById("elapsed").textContent =
-      String(m).padStart(2,"0") + ":" + String(s % 60).padStart(2,"0");
+      String(Math.floor(s/60)).padStart(2,"0") + ":" + String(s%60).padStart(2,"0");
   }, 1000);
 }
 
-function stopTimer() {
-  clearInterval(state.timerInterval);
-}
+function stopTimer() { clearInterval(state.timerInterval); }
 
-// ─── Main loop ────────────────────────────────────────────────────────────────
+// ── Main loop (demo simulation) ───────────────────────────────────────────
 async function startLoop() {
   const goal = document.getElementById("goalInput").value.trim();
   if (!goal) { document.getElementById("goalInput").focus(); return; }
 
   clearAll(false);
-  state.running = true;
-  state.iteration = 0;
-  state.tasksDone = 0;
-  state.tasksTotal = DEMO_TASKS.length;
-  state.confidenceHistory = [];
+  state.running = true; state.paused = false;
+  state.iteration = 0; state.tasksDone = 0; state.gatesHit = 0;
+  state.tasksTotal = DEMO_TASKS.length; state.confidenceHistory = [];
 
   document.getElementById("runBtn").disabled = true;
-  document.getElementById("stopBtn").classList.add("visible");
   document.getElementById("emptyState").style.display = "none";
   document.getElementById("traceLog").style.display = "flex";
   document.getElementById("goalDisplay").style.display = "block";
   document.getElementById("goalDisplayText").textContent = goal;
-
-  const dot = document.getElementById("mainDot");
-  dot.className = "pulse-dot amber";
+  document.getElementById("mainDot").className = "pulse-dot amber";
   document.getElementById("mainStatus").textContent = "RUNNING";
+  document.getElementById("mIterSub").textContent = `of ${document.getElementById("cfgMaxIter").value} max`;
 
   renderTaskCards(DEMO_TASKS);
   startTimer();
 
   for (const ev of DEMO_EVENTS) {
     if (!state.running) break;
-    await new Promise(r => { state.demoTimeout = setTimeout(r, ev.delay); });
-    if (!state.running) break;
 
-    if (ev.gate) {
-      addEvent(ev);
-      const approved = await showGate(ev);
-      if (!approved) { stopLoop("REJECTED"); return; }
-      continue;
-    }
+    // wait for delay (check pause every 100ms)
+    const waited = await waitWithPause(ev.delay);
+    if (!waited) break;
 
     addEvent(ev);
 
-    if (ev.type === "DONE") {
-      finishLoop(true);
-      return;
+    // gate check: autonomy level determines when to show modal
+    const needGate = shouldGate(ev);
+    if (needGate && (ev.gate || ev.type === "PLAN")) {
+      // only gate explicitly marked events + PLAN step in Manual mode
+      if (ev.gate || getAutonomy().threshold >= 999) {
+        const decision = await showGate(ev);
+        if (decision === "reject") { stopLoop("REJECTED"); return; }
+        if (decision === "override") {
+          const correction = document.getElementById("mgCorrection").value.trim();
+          if (correction) {
+            state.injectsUsed++;
+            document.getElementById("sbInjects").textContent = state.injectsUsed;
+            addEvent({ type:"PLAN", main:"Human correction applied", sub: correction });
+          }
+        }
+      }
     }
+
+    if (ev.type === "DONE") { finishLoop(); return; }
   }
 }
 
-function finishLoop(success) {
+async function waitWithPause(ms) {
+  const end = Date.now() + ms;
+  return new Promise(resolve => {
+    function tick() {
+      if (!state.running) { resolve(false); return; }
+      if (state.paused)   { setTimeout(tick, 100); return; }
+      const rem = end - Date.now();
+      if (rem <= 0) { resolve(true); return; }
+      state.nextTimeout = setTimeout(tick, Math.min(100, rem));
+    }
+    tick();
+  });
+}
+
+function finishLoop() {
   state.running = false;
   stopTimer();
   document.getElementById("runBtn").disabled = false;
-  document.getElementById("stopBtn").classList.remove("visible");
-  const dot = document.getElementById("mainDot");
-  if (success) {
-    dot.className = "pulse-dot";
-    document.getElementById("mainStatus").textContent = "COMPLETE";
-    markPhaseDone("plan");
-    markPhaseDone("exec");
-    markPhaseDone("eval");
-    setPhase("done");
-    markPhaseDone("done");
-  }
+  document.getElementById("mainDot").className = "pulse-dot";
+  document.getElementById("mainStatus").textContent = "COMPLETE";
+  markPhaseDone("plan"); markPhaseDone("exec"); markPhaseDone("eval");
+  setPhase("done"); markPhaseDone("done");
 }
 
 function stopLoop(reason) {
   state.running = false;
-  if (state.demoTimeout) clearTimeout(state.demoTimeout);
+  if (state.nextTimeout) clearTimeout(state.nextTimeout);
   stopTimer();
   document.getElementById("runBtn").disabled = false;
-  document.getElementById("stopBtn").classList.remove("visible");
   document.getElementById("mainDot").className = "pulse-dot red";
   document.getElementById("mainStatus").textContent = reason || "STOPPED";
-
-  const log = document.getElementById("traceLog");
-  const div = document.createElement("div");
-  div.className = "trace-event FAIL";
-  div.innerHTML = `
-    <div class="ev-iter">#${state.iteration}</div>
-    <div class="ev-tag FAIL">STOP</div>
-    <div class="ev-body">
-      <div class="ev-main">Loop terminated: ${reason || "user requested stop"}</div>
-    </div>
-  `;
-  log.appendChild(div);
-  log.scrollTop = log.scrollHeight;
+  if (reason !== "REJECTED") {
+    addEvent({ type:"FAIL", main:"Loop terminated: " + (reason || "user stopped") });
+  }
 }
 
 function clearAll(resetView = true) {
-  state.running = false;
-  state.iteration = 0;
-  state.tasksDone = 0;
-  state.confidenceHistory = [];
-  if (state.demoTimeout) clearTimeout(state.demoTimeout);
+  state.running = false; state.paused = false;
+  if (state.nextTimeout) clearTimeout(state.nextTimeout);
   stopTimer();
+  Object.assign(state, { iteration:0, tasksDone:0, gatesHit:0, injectsUsed:0, confidenceHistory:[], gateResolve:null });
 
-  document.getElementById("hIter").textContent = "0";
-  document.getElementById("hDone").textContent = "0";
-  document.getElementById("hRate").textContent = "—";
-  document.getElementById("mIter").textContent = "0";
+  ["hIter","hDone","hGates","mIter","sbGates","sbInjects"].forEach(id => document.getElementById(id).textContent = "0");
   document.getElementById("mConf").textContent = "—";
   document.getElementById("mConf").className = "metric-big";
   document.getElementById("elapsed").textContent = "00:00";
   document.getElementById("runBtn").disabled = false;
-  document.getElementById("stopBtn").classList.remove("visible");
   document.getElementById("mainDot").className = "pulse-dot idle";
   document.getElementById("mainStatus").textContent = "IDLE";
-
   ["plan","exec","eval","done"].forEach(p => {
-    const el = document.getElementById(`cn-${p}`);
-    if (el) el.classList.remove("active","done");
-    const tid = document.getElementById(`cn-${p}-id`);
-    if (tid) tid.textContent = "";
+    document.getElementById(`cn-${p}`)?.classList.remove("active","done");
   });
-
-  const canvas = document.getElementById("sparkCanvas");
-  canvas.getContext("2d").clearRect(0,0,canvas.width,canvas.height);
+  document.getElementById("sparkCanvas").getContext("2d").clearRect(0,0,248,44);
+  document.getElementById("humanGateModal").classList.remove("open");
+  document.getElementById("injectArea").classList.remove("open");
 
   if (resetView) {
     document.getElementById("traceLog").innerHTML = "";
     document.getElementById("traceLog").style.display = "none";
     document.getElementById("emptyState").style.display = "flex";
     document.getElementById("goalDisplay").style.display = "none";
-    document.getElementById("taskCards").innerHTML = `<div style="padding:16px;font-size:10px;color:var(--text-faint);letter-spacing:0.1em;text-transform:uppercase">No tasks yet</div>`;
+    document.getElementById("taskCards").innerHTML = `<div style="padding:14px 16px;font-size:10px;color:var(--text-faint);letter-spacing:0.1em;text-transform:uppercase">No tasks yet</div>`;
   }
 }
 </script>
